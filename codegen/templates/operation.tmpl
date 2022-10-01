@@ -1,0 +1,78 @@
+package generate
+
+import (
+	"context"
+	"demo/utils"
+	"fmt"
+)
+
+{{$operation := (print .Operation | Title)}}
+
+//{{$operation}}
+
+{{$name := print $operation  .Name}}
+{{$argTyp := print $name "Response"}}
+
+
+
+// 合成响应结构体
+type {{ $argTyp }} struct {
+{{range .SelectionSet}}
+        {{$sign := "*"}}
+        {{ if eq .Definition.Type.NamedType ""}}
+        {{$sign = "[]"}}
+        {{end}}
+        {{if eq (len .SelectionSet) 0 }}
+            {{Title .Name}} {{$sign}}{{Title .Name}}  `json:"{{.Alias}}"`
+        {{else}}
+            {{Title .Name}} {{$sign}}{{Title .Name}}   `json:"{{.Alias}}"`
+        {{end}}
+{{ end }}
+}
+
+
+// 这个值需要合成进来~
+const testStr = `
+# Write your query or mutation here
+query Test($whe: PostWhereInput!, $tak: Int!) {
+	findManyPost(where: $whe, take: $tak, skip: 0) {
+		id
+		published
+		title
+		author {
+			desc
+			id
+		}
+	}
+}
+`
+
+{{$input := ""}}
+{{range .VariableDefinitions}}
+	{{$input = print $input "," .Variable}}
+	{{ $namedType := .Type.NamedType}}
+    {{if eq .Definition.Kind  "SCALAR" }}
+		{{$input = print $input " "}}
+		{{ $namedType = lowerTitle .Type.NamedType}}
+    {{else}}
+		{{$input = print $input " *"}}
+    {{end }}
+	{{$input = print $input  $namedType}}
+	//{{$input}}
+{{ end }}
+
+
+func (t Queries) {{.Name}}(ctx context.Context {{$input}}) (res *{{ $argTyp }}, err error) {
+
+	input := map[string]interface{}{
+		{{range .VariableDefinitions}}
+			"{{.Variable}}": {{.Variable}},
+		{{ end }}
+	}
+	qry, _ := utils.InlineQuery(testStr, input) //这里要优化？
+	err = Do(ctx, t.e, qry, &res)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return
+}

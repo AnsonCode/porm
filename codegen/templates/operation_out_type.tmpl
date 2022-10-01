@@ -1,0 +1,31 @@
+// 目前发现可能会重复
+package generate
+
+{{range .}}
+    type {{Title .Alias}} struct{
+      {{range .SelectionSet}}
+        {{ $tpy :=  .Definition.Type.NamedType }}
+        {{ $sign :=  "*" }}
+        {{if eq  $tpy  "" }}
+          {{ $tpy = .Definition.Type.Elem.NamedType}}
+          {{ $sign =  "[]" }}
+        {{end }}
+        // 这里做布尔类型的判断 {{$tpy}}
+        {{if eq  $tpy  "Boolean" }}
+          {{ $tpy = "bool"}}
+        {{end }}
+        
+        {{if eq (len .SelectionSet) 0 }}
+            {{if ne $tpy "DateTime"}}
+              {{ $tpy = lowerTitle $tpy}}
+            {{end}}
+        {{else}}
+             {{ $tpy = Title .Alias}}
+        {{end}}
+
+         {{Title .Alias}} {{$sign}}{{$tpy}} //`structs:"{{.Alias}},omitempty"`
+      {{ end }}
+    }
+{{ end }}
+
+

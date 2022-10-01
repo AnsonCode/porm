@@ -1,0 +1,12 @@
+# Write your query or mutation here
+query Test($whe: PostWhereInput!, $tak: Int!) {
+	findManyPost(where: $whe, take: $tak, skip: 0) {
+		id
+		published
+		title
+		author {
+			desc
+			id
+		}
+	}
+}
