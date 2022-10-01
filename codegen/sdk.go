@@ -1,0 +1,110 @@
+package codegen
+
+import (
+	"fmt"
+	"regexp"
+)
+
+func DataType(n *Identifier) string {
+	if n.Schema != "" {
+		return n.Schema + "." + n.Name
+	} else {
+		return n.Name
+	}
+}
+
+func MatchString(pat, target string) bool {
+	matcher, err := MatchCompile(pat)
+	if err != nil {
+		panic(err)
+	}
+	return matcher.MatchString(target)
+}
+
+func Matches(o *Override, n *Identifier, defaultSchema string) bool {
+	if n == nil {
+		return false
+	}
+	schema := n.Schema
+	if n.Schema == "" {
+		schema = defaultSchema
+	}
+	if o.Table.Catalog != "" && !MatchString(o.Table.Catalog, n.Catalog) {
+		return false
+	}
+	if o.Table.Schema == "" && schema != "" {
+		return false
+	}
+	if o.Table.Schema != "" && !MatchString(o.Table.Schema, schema) {
+		return false
+	}
+	if o.Table.Name == "" && n.Name != "" {
+		return false
+	}
+	if o.Table.Name != "" && !MatchString(o.Table.Name, n.Name) {
+		return false
+	}
+	return true
+}
+
+func SameTableName(tableID, f *Identifier, defaultSchema string) bool {
+	if tableID == nil {
+		return false
+	}
+	schema := tableID.Schema
+	if tableID.Schema == "" {
+		schema = defaultSchema
+	}
+	return tableID.Catalog == f.Catalog && schema == f.Schema && tableID.Name == f.Name
+}
+
+// Match is a wrapper of *regexp.Regexp.
+// It contains the match pattern compiled into a regular expression.
+type Match struct {
+	*regexp.Regexp
+}
+
+// Compile takes our match expression as a string, and compiles it into a *Match object.
+// Will return an error on an invalid pattern.
+func MatchCompile(pattern string) (match *Match, err error) {
+	regex := ""
+	escaped := false
+	arr := []byte(pattern)
+
+	for i := 0; i < len(arr); i++ {
+		if escaped {
+			escaped = false
+			switch arr[i] {
+			case '*', '?', '\\':
+				regex += "\\" + string(arr[i])
+			default:
+				return nil, fmt.Errorf("Invalid escaped character '%c'", arr[i])
+			}
+		} else {
+			switch arr[i] {
+			case '\\':
+				escaped = true
+			case '*':
+				regex += ".*"
+			case '?':
+				regex += "."
+			case '.', '(', ')', '+', '|', '^', '$', '[', ']', '{', '}':
+				regex += "\\" + string(arr[i])
+			default:
+				regex += string(arr[i])
+			}
+		}
+	}
+
+	if escaped {
+		return nil, fmt.Errorf("Unterminated escape at end of pattern")
+	}
+
+	var r *regexp.Regexp
+
+	if r, err = regexp.Compile("^" + regex + "$"); err != nil {
+		return nil, err
+	}
+
+	return &Match{r}, nil
+}
