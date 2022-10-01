@@ -23,16 +23,6 @@ func addExtraGoStructTags(tags map[string]string, req *CodeGenRequest, col *Colu
 }
 
 func goType(req *CodeGenRequest, field *ast.FieldDefinition) string {
-	// Check if the column's type has been overridden
-	// for _, oride := range req.Settings.Overrides {
-	// 	if oride.GoType.TypeName == "" {
-	// 		continue
-	// 	}
-	// 	sameTable := Matches(oride, col.Table, req.Catalog.DefaultSchema)
-	// 	if oride.Column != "" && MatchString(oride.ColumnName, col.Name) && sameTable {
-	// 		return oride.GoType.TypeName
-	// 	}
-	// }
 	col := &Column{
 		Name:    field.Name,
 		IsArray: field.Type.NamedType == "",
@@ -40,64 +30,47 @@ func goType(req *CodeGenRequest, field *ast.FieldDefinition) string {
 			Name: field.Type.NamedType,
 		},
 		NotNull: field.Type.NonNull,
-		Comment: "todo",
+		Comment: "todo1",
 	}
 	if col.IsArray {
 		col.Type = &Identifier{
 			Name: field.Type.Elem.NamedType,
 		}
 	}
+	// if field.SelectionSet != nil {
+	// 			// 是否数组的处理
+	// 			gotypeName = StructName(field2.Name)
+	// 		}
 
-	// {{range .}}
-	//     type {{.Name}} struct {
-	// 		{{range .Fields}}
-	// 			{{if eq .Type.NamedType "" }}
-	// 				{{Title .Name}} *[]{{.Type.Elem.NamedType}}   `json:"{{.Name}},omitempty"`
-	// 			{{else}}
-	// 				{{Title .Name}} *{{.Type.NamedType}}  `json:"{{.Name}},omitempty"`
-	//     		{{end }}
+	typ := graphqlType(req, col)
 
-	// 		{{ end }}
-	//     }
-	// {{ end }}
-	// 	type Column struct {
-	// 	Name         string `json:"name,omitempty"`
-	// 	NotNull      bool   `json:"not_null,omitempty"`
-	// 	IsArray      bool   `json:"is_array,omitempty"`
-	// 	Comment      string `json:"comment,omitempty"`
-	// 	Length       int32  `json:"length,omitempty"`
-	// 	IsNamedParam bool   `json:"is_named_param,omitempty"`
-	// 	IsFuncCall   bool   `json:"is_func_call,omitempty"`
-	// 	// XXX: Figure out what PostgreSQL calls `foo.id`
-	// 	Scope      string      `json:"scope,omitempty"`
-	// 	Table      *Identifier `json:"table,omitempty"`
-	// 	TableAlias string      `json:"table_alias,omitempty"`
-	// 	Type       *Identifier `json:"type,omitempty"`
-	// }
-
-	typ := goInnerType(req, col)
 	if col.IsArray {
 		return "[]" + typ
 	}
 	return typ
 }
 
-func goInnerType(req *CodeGenRequest, col *Column) string {
-	// columnType := DataType(col.Type)
-	// notNull := col.NotNull || col.IsArray
+func goType2(req *CodeGenRequest, variable *ast.VariableDefinition) string {
+	col := &Column{
+		Name:    variable.Variable,
+		IsArray: variable.Type.NamedType == "",
+		Type: &Identifier{
+			Name: variable.Type.NamedType,
+		},
+		NotNull: variable.Type.NonNull,
+		Comment: "todo2",
+	}
+	if col.IsArray {
+		col.Type = &Identifier{
+			Name: variable.Type.Elem.NamedType,
+		}
+	}
 
-	// package overrides have a higher precedence
-	// for _, oride := range req.Settings.Overrides {
-	// 	if oride.GoType.TypeName == "" {
-	// 		continue
-	// 	}
-	// 	if oride.DbType != "" && oride.DbType == columnType && oride.Nullable != notNull {
-	// 		return oride.GoType.TypeName
-	// 	}
-	// }
-
-	// TODO: Extend the engine interface to handle types
-	return graphqlType(req, col)
+	typ := graphqlType(req, col)
+	if col.IsArray {
+		return "[]" + typ
+	}
+	return typ
 }
 
 // https://chenyitian.gitbooks.io/graphql/content/schema.html#scalar-types
@@ -172,7 +145,7 @@ func graphqlType(req *CodeGenRequest, col *Column) string {
 		// if debug.Active {
 		// 	log.Printf("Unknown MySQL type: %s\n", columnType)
 		// }
-		return columnType
+		return "*" + columnType
 
 	}
 }

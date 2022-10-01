@@ -26,14 +26,22 @@ func (gf Field) Tag() string {
 	return strings.Join(tags, " ")
 }
 
-// func JSONTagName(name string, settings *plugin.Settings) string {
-// 	style := settings.Go.JsonTagsCaseStyle
-// 	if style == "" || style == "none" {
-// 		return name
-// 	} else {
-// 		return SetCaseStyle(name, style)
-// 	}
-// }
+func JSONTagName2(name string, omitempty bool) string {
+	if omitempty {
+		return name + ",omitempty"
+
+	}
+	return name
+}
+
+func JSONTagName(name string, settings *Settings) string {
+	style := settings.Go.JsonTagsCaseStyle
+	if style == "" || style == "none" {
+		return name
+	} else {
+		return SetCaseStyle(name, style)
+	}
+}
 
 func SetCaseStyle(name string, style string) string {
 	switch style {

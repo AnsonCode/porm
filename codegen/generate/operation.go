@@ -2,8 +2,9 @@ package generate
 
 import (
 	"context"
-	"demo/utils"
 	"fmt"
+
+	"github.com/AnsonCode/porm/utils"
 )
 
 //Query

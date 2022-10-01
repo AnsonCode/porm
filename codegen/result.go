@@ -66,12 +66,22 @@ func buildStructs(req *CodeGenRequest) []Struct {
 
 		// opd.Operation
 		// 收集响应参数的类型
+
 		for _, v := range opd.SelectionSet {
 			filed, ok := v.(*ast.Field)
 			if ok {
-				diguiFind2(filed)
+				diguiFind2(opd.Name, filed)
 			}
 		}
+		// 这里补充一个 整体的响应
+
+		s := Struct{
+			// Table:   plugin.Identifier{Schema: schema.Name, Name: table.Rel.Name},
+			Name:    StructName(opd.Name) + "Response", //
+			Comment: "res2_struct",
+			Fields:  selectionSet2Fields(req, opd.SelectionSet),
+		}
+		structs = append(structs, s)
 
 	}
 
@@ -81,7 +91,7 @@ func buildStructs(req *CodeGenRequest) []Struct {
 		fmt.Println(d.Name)
 		gqlTypes[v] = req.Schema.Types[v]
 	}
-
+	// 处理输入参数的结构体
 	for structName, def := range gqlTypes {
 		s := Struct{
 			// Table:   plugin.Identifier{Schema: schema.Name, Name: table.Rel.Name},
@@ -94,12 +104,13 @@ func buildStructs(req *CodeGenRequest) []Struct {
 			// if req.Settings.Go.EmitJsonTags {
 			// 	// tags["json"] = JSONTagName(column.Name, req.Settings)
 			// }
+			tags["json"] = JSONTagName2(field.Name, true)
 			// addExtraGoStructTags(tags, req, column)
 			s.Fields = append(s.Fields, Field{
-				Name:    field.Name, //StructName(column.Name)
+				Name:    StructName(field.Name), //StructName(column.Name)
 				Type:    goType(req, field),
 				Tags:    tags,
-				Comment: "",
+				Comment: "df",
 			})
 		}
 		fmt.Println(s)
@@ -107,26 +118,16 @@ func buildStructs(req *CodeGenRequest) []Struct {
 		structs = append(structs, s)
 	}
 
+	// 处理响应结果的结构体
 	for _, filed := range fieldList {
 		fmt.Println(filed.Alias)
 		s := Struct{
 			// Table:   plugin.Identifier{Schema: schema.Name, Name: table.Rel.Name},
-			Name:    filed.Alias, // StructName(filed.Alias)
+			Name:    StructName(filed.Name), //
 			Comment: "res_struct",
 		}
-		for _, selection := range filed.SelectionSet {
-			field2, ok := selection.(*ast.Field)
-			if ok {
-				tags := map[string]string{}
-				// addExtraGoStructTags(tags, req, column)
-				s.Fields = append(s.Fields, Field{
-					Name:    field2.Name, //StructName(column.Name)
-					Type:    goType(req, field2.Definition),
-					Tags:    tags,
-					Comment: "-",
-				})
-			}
-		}
+		s.Fields = selectionSet2Fields(req, filed.SelectionSet)
+
 		structs = append(structs, s)
 		fmt.Println(s)
 	}
@@ -153,10 +154,40 @@ func buildStructs(req *CodeGenRequest) []Struct {
 	return structs
 }
 
-// type goColumn struct {
-// 	id int
-// 	*plugin.Column
-// }
+func selectionSet2Fields(req *CodeGenRequest, set ast.SelectionSet) []Field {
+	fields := []Field{}
+	for _, selection := range set {
+		field2, ok := selection.(*ast.Field)
+		if ok {
+			tags := map[string]string{}
+			tags["json"] = JSONTagName(field2.Alias, req.Settings)
+			// addExtraGoStructTags(tags, req, column)
+
+			// TODO:特定情况下，修改下定义~ 这种定义方式不友好~
+			if field2.SelectionSet != nil {
+				if field2.Definition.Type.NamedType == "" {
+					field2.Definition.Type.Elem.NamedType = StructName(field2.Name)
+				} else {
+					field2.Definition.Type.NamedType = StructName(field2.Name)
+				}
+			}
+			gotypeName := goType(req, field2.Definition)
+
+			fields = append(fields, Field{
+				Name:    StructName(field2.Alias), //StructName(column.Name)
+				Type:    gotypeName,
+				Tags:    tags,
+				Comment: "-",
+			})
+		}
+	}
+	return fields
+}
+
+type goColumn struct {
+	id int
+	// *plugin.Column
+}
 
 // func columnName(c *plugin.Column, pos int) string {
 // 	if c.Name != "" {
@@ -189,18 +220,16 @@ func argName(name string) string {
 func buildQueries(req *CodeGenRequest, structs []Struct) ([]Query, error) {
 	qs := make([]Query, 0, len(req.OperationList))
 	for _, query := range req.OperationList {
-		// if query.Name == "" {
-		// 	continue
-		// }
-		// if query.Cmd == "" {
-		// 	continue
-		// }
+		if query.Name == "" {
+			fmt.Println("query name is null ,skip")
+			continue
+		}
 
 		var constantName string
 		// if req.Settings.Go.EmitExportedQueries {
 		// 	constantName = Title(query.Name)
 		// } else {
-		// 	constantName = LowerTitle(query.Name)
+		constantName = LowerTitle(query.Name)
 		// }
 
 		gq := Query{
@@ -208,100 +237,46 @@ func buildQueries(req *CodeGenRequest, structs []Struct) ([]Query, error) {
 			ConstantName: constantName,
 			FieldName:    LowerTitle(query.Name) + "Stmt",
 			MethodName:   query.Name,
-			// SourceName:   query.Filename,
-			// SQL:          query.Text,
-			// Comments:     query.Comments,
+			SourceName:   query.Name, // TODO：这里要完善
+			SQL:          query.Position.Src.Input,
+			Comments:     []string{string(query.Operation)},
 			// Table:        query.InsertIntoTable,
 		}
 		// sqlpkg := SQLPackageFromString(req.Settings.Go.SqlPackage)
 
-		if len(query.VariableDefinitions) == 1 {
-			p := query.VariableDefinitions[0]
-			gq.Arg = QueryValue{
-				Name: p.Definition.Name, //paramName(p)
-				// Typ:  goType(req, p.Column),
+		allArg := []QueryValue{}
+		for _, variable := range query.VariableDefinitions {
+			arg := QueryValue{
+				Name: variable.Variable, //paramName(p)
+				Typ:  goType2(req, variable),
 				// SQLPackage: sqlpkg,
 			}
+			allArg = append(allArg, arg)
 		}
-		// else if len(query.VariableDefinitions) > 1 {
-		// 	var cols []goColumn
-		// 	for _, p := range query.VariableDefinitions {
-		// 		cols = append(cols, goColumn{
-		// 			id:     int(p.Number),
-		// 			Column: p.Column,
-		// 		})
-		// 	}
-		// 	s, err := columnsToStruct(req, gq.MethodName+"Params", cols, false)
-		// 	if err != nil {
-		// 		return nil, err
-		// 	}
-		// 	gq.Arg = QueryValue{
-		// 		Emit:   true,
-		// 		Name:   "arg",
-		// 		Struct: s,
-		// 		// SQLPackage:  sqlpkg,
-		// 		// EmitPointer: req.Settings.Go.EmitParamsStructPointers,
-		// 	}
-		// }
+		gq.Arg = allArg
 
-		// if len(query.Columns) == 1 {
-		// 	c := query.Columns[0]
-		// 	name := columnName(c, 0)
-		// 	if c.IsFuncCall {
-		// 		name = strings.Replace(name, "$", "_", -1)
-		// 	}
-		// 	gq.Ret = QueryValue{
-		// 		Name:       name,
-		// 		Typ:        goType(req, c),
-		// 		SQLPackage: sqlpkg,
-		// 	}
-		// } else if len(query.Columns) > 1 {
-		// 	var gs *Struct
-		// 	var emit bool
+		// 这里开始构造方法的返回结果
+		gs := &Struct{
+			Name: query.Name + "Response",
+		}
+		for _, selection := range query.SelectionSet {
+			field3, ok := selection.(*ast.Field)
+			if ok {
+				newfield := Field{
+					Name: field3.Name,
+					Type: goType(req, field3.Definition),
+				}
 
-		// 	for _, s := range structs {
-		// 		if len(s.Fields) != len(query.Columns) {
-		// 			continue
-		// 		}
-		// 		same := true
-		// 		for i, f := range s.Fields {
-		// 			c := query.Columns[i]
-		// 			sameName := f.Name == StructName(columnName(c, i), req.Settings)
-		// 			sameType := f.Type == goType(req, c)
-		// 			sameTable := sdk.SameTableName(c.Table, &s.Table, req.Catalog.DefaultSchema)
-		// 			if !sameName || !sameType || !sameTable {
-		// 				same = false
-		// 			}
-		// 		}
-		// 		if same {
-		// 			gs = &s
-		// 			break
-		// 		}
-		// 	}
-
-		// 	if gs == nil {
-		// 		var columns []goColumn
-		// 		for i, c := range query.Columns {
-		// 			columns = append(columns, goColumn{
-		// 				id:     i,
-		// 				Column: c,
-		// 			})
-		// 		}
-		// 		var err error
-		// 		gs, err = columnsToStruct(req, gq.MethodName+"Row", columns, true)
-		// 		if err != nil {
-		// 			return nil, err
-		// 		}
-		// 		emit = true
-		// 	}
-		// 	gq.Ret = QueryValue{
-		// 		Emit:        emit,
-		// 		Name:        "i",
-		// 		Struct:      gs,
-		// 		SQLPackage:  sqlpkg,
-		// 		EmitPointer: req.Settings.Go.EmitResultStructPointers,
-		// 	}
-		// }
+				gs.Fields = append(gs.Fields, newfield)
+			}
+		}
+		gq.Ret = QueryValue{
+			Emit:   true,
+			Name:   query.Name + "Response",
+			Struct: gs,
+			// SQLPackage:  sqlpkg,
+			EmitPointer: req.Settings.Go.EmitResultStructPointers,
+		}
 
 		qs = append(qs, gq)
 	}
@@ -386,14 +361,14 @@ func buildQueries(req *CodeGenRequest, structs []Struct) ([]Query, error) {
 // 	return &gs, nil
 // }
 
-func checkIncompatibleFieldTypes(fields []Field) error {
-	fieldTypes := map[string]string{}
-	for _, field := range fields {
-		if fieldType, found := fieldTypes[field.Name]; !found {
-			fieldTypes[field.Name] = field.Type
-		} else if field.Type != fieldType {
-			return fmt.Errorf("named param %s has incompatible types: %s, %s", field.Name, field.Type, fieldType)
-		}
-	}
-	return nil
-}
+// func checkIncompatibleFieldTypes(fields []Field) error {
+// 	fieldTypes := map[string]string{}
+// 	for _, field := range fields {
+// 		if fieldType, found := fieldTypes[field.Name]; !found {
+// 			fieldTypes[field.Name] = field.Type
+// 		} else if field.Type != fieldType {
+// 			return fmt.Errorf("named param %s has incompatible types: %s, %s", field.Name, field.Type, fieldType)
+// 		}
+// 	}
+// 	return nil
+// }

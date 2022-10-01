@@ -35,6 +35,11 @@ func Read() {
 		Schema:        schema,
 		OperationList: doc.Operations,
 		SqlcVersion:   "test",
+		Settings: &Settings{
+			Go: &GoCode{
+				Package: "generate2",
+			},
+		},
 	}
 	ctx := context.TODO()
 	Generate2(ctx, req)
@@ -62,10 +67,14 @@ type tmplCtx struct {
 
 	Operations []*ast.Operation
 
-	// Enums       []Enum
+	Enums       []Enum
 	Structs     []Struct
 	GoQueries   []Query
 	PormVersion string
+}
+
+func (t *tmplCtx) OutputQuery(sourceName string) bool {
+	return t.SourceName == sourceName
 }
 
 // enums []Enum,
@@ -97,10 +106,10 @@ func generate(req *CodeGenRequest, structs []Struct, queries []Query) (*CodeGenR
 
 	golang := req.Settings.Go
 	tctx := tmplCtx{
-		Q:         "`",
-		Package:   golang.Package,
-		GoQueries: queries,
-		// Enums:       enums,
+		Q:           "`",
+		Package:     golang.Package,
+		GoQueries:   queries,
+		Enums:       []Enum{},
 		Structs:     structs,
 		PormVersion: req.SqlcVersion,
 	}
@@ -175,6 +184,9 @@ func generate(req *CodeGenRequest, structs []Struct, queries []Query) (*CodeGenR
 			Name:     filename,
 			Contents: []byte(code),
 		})
+		if err := ioutil.WriteFile("./generate2/"+filename+".go", []byte(code), 0666); err != nil {
+			panic(err)
+		}
 	}
 
 	return &resp, nil
@@ -196,7 +208,7 @@ func Generate() {
 	for _, v := range opd.SelectionSet {
 		filed, ok := v.(*ast.Field)
 		if ok {
-			diguiFind2(filed)
+			diguiFind2("T", filed)
 		}
 	}
 	for _, filed := range fieldList {
@@ -291,10 +303,12 @@ func diguiFind(defname string, all map[string]*ast.Definition) {
 
 var fieldList = []*ast.Field{}
 
-func diguiFind2(root *ast.Field) {
+func diguiFind2(optName string, root *ast.Field) {
 	if root.SelectionSet == nil {
 		return
 	}
+	root.Name = optName + root.Name
+	// root.Alias = optName + root.Alias
 	fieldList = append(fieldList, root)
 
 	for _, v := range root.SelectionSet {
@@ -303,7 +317,7 @@ func diguiFind2(root *ast.Field) {
 			if filed.SelectionSet != nil {
 				// fieldList = append(fieldList, filed)
 				// 这里递归下
-				diguiFind2(filed)
+				diguiFind2(optName, filed)
 			}
 		}
 		// var _ = (ast.Field)(&container{})

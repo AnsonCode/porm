@@ -158,7 +158,7 @@ type Query struct {
 	SQL          string
 	SourceName   string
 	Ret          QueryValue
-	Arg          QueryValue
+	Arg          []QueryValue
 	// Used for :copyfrom
 	// Table *plugin.Identifier
 }
