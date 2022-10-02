@@ -21,6 +21,7 @@ const test = `# name: Test
 		author {
 			desc
 			id
+			sex
 		}
 	}
 }

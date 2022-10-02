@@ -10,11 +10,13 @@ type DateTime time.Time
 
 // 枚举定义开始
 
-// tes
-type Test string
+// enum
+type Sex string
 
 const (
-	TestTest Test = "test"
+	SexMALE   Sex = "MALE"
+	SexFEMAL  Sex = "FEMAL"
+	SexUNKOWN Sex = "UNKOWN"
 )
 
 // 结构定义开始
@@ -189,10 +191,6 @@ type ReateResponse struct {
 	CreateOnePost *ReateCreateOnePost `json:"createOnePost"`
 }
 
-// ENUM
-type Sex struct {
-}
-
 // INPUT_OBJECT
 type StringFilter struct {
 	// df
@@ -251,6 +249,8 @@ type TestAuthor struct {
 	Desc *string `json:"desc"`
 	// -
 	ID string `json:"id"`
+	// -
+	Sex *Sex `json:"sex"`
 }
 
 // OBJECT_Query_PART

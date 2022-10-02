@@ -59,7 +59,7 @@ func buildEnums(req *CodeGenRequest) []Enum {
 	return enums
 }
 
-func buildStructs(req *CodeGenRequest) []Struct {
+func buildStructs(req *CodeGenRequest) ([]Struct, []Enum) {
 	var structs []Struct
 	for _, opd := range req.OperationList {
 		// 收集输入参数的类型
@@ -80,7 +80,7 @@ func buildStructs(req *CodeGenRequest) []Struct {
 				if opd.Name == "reate" {
 					fmt.Println("debug")
 				}
-				// diguiFind2(opd.Name, filed)
+				// TODO: 递归的方法尽量不用全局变量
 				recursiveResStruct(req, opd.Name, filed)
 			}
 		}
@@ -99,72 +99,69 @@ func buildStructs(req *CodeGenRequest) []Struct {
 		resStructList = []Struct{}                  //清空下
 	}
 
+	var enums []Enum
+
 	// 处理输入参数的结构体
 	for _, structName := range inputStructNameList {
 		d := req.Schema.Types[structName]
 		fmt.Println(d.Name)
 		def := req.Schema.Types[structName]
-		s := Struct{
-			IsRes: false,
-			Kind:  string(def.Kind),
-			// Table:   plugin.Identifier{Schema: schema.Name, Name: table.Rel.Name},
-			Name:    StructName(structName),
-			Comment: string(def.Kind),
-		}
-		for _, field := range def.Fields {
+		if def.Kind == "ENUM" {
+			fmt.Print("enum:", structName)
+			e := Enum{
+				Name:    StructName(structName),
+				Comment: "enum",
+			}
+			for _, enumValue := range def.EnumValues {
+				e.Constants = append(e.Constants, Constant{
+					Name:  StructName(e.Name + "_" + enumValue.Name),
+					Value: enumValue.Name,
+					Type:  e.Name,
+				})
+			}
+			enums = append(enums, e)
 
-			tags := map[string]string{}
-			// if req.Settings.Go.EmitJsonTags {
-			// 	// tags["json"] = JSONTagName(column.Name, req.Settings)
-			// }
-			tags["json"] = JSONTagName2(field.Name, true)
-			// addExtraGoStructTags(tags, req, column)
-			s.Fields = append(s.Fields, Field{
-				Name:    StructName(field.Name), //StructName(column.Name)
-				Type:    goType(req, field),
-				Tags:    tags,
-				Comment: "df",
-			})
-		}
-		fmt.Println(s)
+		} else {
+			s := buildStruct(req, def)
+			fmt.Println(s)
 
-		structs = append(structs, s)
+			structs = append(structs, *s)
+		}
 	}
-
-	// 处理响应结果的结构体
-	// for _, filed := range fieldList {
-	// 	fmt.Println(filed.Alias)
-	// 	s := Struct{
-	// 		// Table:   plugin.Identifier{Schema: schema.Name, Name: table.Rel.Name},
-	// 		Name:    StructName(filed.Name), //
-	// 		Comment: "res_struct",
-	// 	}
-	// 	s.Fields = selectionSet2Fields(req, filed.SelectionSet)
-
-	// 	structs = append(structs, s)
-	// 	fmt.Println(s)
-	// }
-
-	// for _, schema := range req.Catalog.Schemas {
-	// 	for _, table := range schema.Tables {
-	// 		var tableName string
-	// 		if schema.Name == req.Catalog.DefaultSchema {
-	// 			tableName = table.Rel.Name
-	// 		} else {
-	// 			tableName = schema.Name + "_" + table.Rel.Name
-	// 		}
-	// 		structName := tableName
-	// 		// if !req.Settings.Go.EmitExactTableNames {
-	// 		// 	// structName = inflection.Singular(structName)
-	// 		// }
-
-	// 	}
-	// }
 
 	if len(structs) > 0 {
 		sort.Slice(structs, func(i, j int) bool { return structs[i].Name < structs[j].Name })
 	}
-	return structs
+	if len(enums) > 0 {
+		sort.Slice(enums, func(i, j int) bool { return enums[i].Name < enums[j].Name })
+	}
+	return structs, enums
+}
+
+func buildStruct(req *CodeGenRequest, def *ast.Definition) *Struct {
+	s := Struct{
+		IsRes: false,
+		Kind:  string(def.Kind),
+		// Table:   plugin.Identifier{Schema: schema.Name, Name: table.Rel.Name},
+		Name:    StructName(def.Name),
+		Comment: string(def.Kind),
+	}
+	for _, field := range def.Fields {
+
+		tags := map[string]string{}
+		// if req.Settings.Go.EmitJsonTags {
+		// 	// tags["json"] = JSONTagName(column.Name, req.Settings)
+		// }
+		tags["json"] = JSONTagName2(field.Name, true)
+		// addExtraGoStructTags(tags, req, column)
+		s.Fields = append(s.Fields, Field{
+			Name:    StructName(field.Name), //StructName(column.Name)
+			Type:    goType(req, field),
+			Tags:    tags,
+			Comment: "df",
+		})
+	}
+	return &s
 }
 
 var resStructList []Struct
@@ -232,7 +229,7 @@ func selectionSet2Fields(req *CodeGenRequest, optName string, set ast.SelectionS
 	return fields
 }
 
-// 死循环了~
+// 怕死循环了~
 var inputStructNameList = []string{}
 
 // var defaultGqlDefinitionNamedType = []string{"StringFilter", "StringNullableFilter", "DateTimeFilter", "BoolFilter"}
