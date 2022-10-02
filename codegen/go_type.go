@@ -2,25 +2,25 @@ package codegen
 
 import "github.com/vektah/gqlparser/v2/ast"
 
-func addExtraGoStructTags(tags map[string]string, req *CodeGenRequest, col *Column) {
-	for _, oride := range req.Settings.Overrides {
-		if oride.GoType.StructTags == nil {
-			continue
-		}
-		// if !sdk.Matches(oride, col.Table, req.Catalog.DefaultSchema) {
-		// 	// Different table.
-		// 	continue
-		// }
-		// if !sdk.MatchString(oride.ColumnName, col.Name) {
-		// 	// Different column.
-		// 	continue
-		// }
-		// Add the extra tags.
-		for k, v := range oride.GoType.StructTags {
-			tags[k] = v
-		}
-	}
-}
+// func addExtraGoStructTags(tags map[string]string, req *CodeGenRequest, col *Column) {
+// 	for _, oride := range req.Settings.Overrides {
+// 		if oride.GoType.StructTags == nil {
+// 			continue
+// 		}
+// 		// if !sdk.Matches(oride, col.Table, req.Catalog.DefaultSchema) {
+// 		// 	// Different table.
+// 		// 	continue
+// 		// }
+// 		// if !sdk.MatchString(oride.ColumnName, col.Name) {
+// 		// 	// Different column.
+// 		// 	continue
+// 		// }
+// 		// Add the extra tags.
+// 		for k, v := range oride.GoType.StructTags {
+// 			tags[k] = v
+// 		}
+// 	}
+// }
 
 func goType(req *CodeGenRequest, field *ast.FieldDefinition) string {
 	col := &Column{
@@ -74,10 +74,6 @@ func goType2(req *CodeGenRequest, variable *ast.VariableDefinition) string {
 }
 
 // https://chenyitian.gitbooks.io/graphql/content/schema.html#scalar-types
-// Int：有符号 32 位整数。
-// Float：有符号双精度浮点值。
-// String：UTF‐8 字符序列。
-// Boolean：true 或者 false。
 func graphqlType(req *CodeGenRequest, col *Column) string {
 	columnType := DataType(col.Type)
 	notNull := col.NotNull || col.IsArray

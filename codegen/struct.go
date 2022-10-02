@@ -7,7 +7,7 @@ import (
 )
 
 type Struct struct {
-	// Table   plugin.Identifier
+	Table   Identifier
 	Name    string
 	Fields  []Field
 	Comment string

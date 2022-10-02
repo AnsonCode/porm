@@ -64,24 +64,25 @@ func buildStructs(req *CodeGenRequest) []Struct {
 
 		// opd := doc.Operations.ForName("")
 
-		// opd.Operation
 		// 收集响应参数的类型
-
 		for _, v := range opd.SelectionSet {
 			filed, ok := v.(*ast.Field)
 			if ok {
-				diguiFind2(opd.Name, filed)
+				// diguiFind2(opd.Name, filed)
+				diguiResStruct(req, opd.Name, filed)
 			}
 		}
-		// 这里补充一个 整体的响应
 
+		// 这里补充一个 整体的响应
 		s := Struct{
 			// Table:   plugin.Identifier{Schema: schema.Name, Name: table.Rel.Name},
 			Name:    StructName(opd.Name) + "Response", //
 			Comment: "res2_struct",
-			Fields:  selectionSet2Fields(req, opd.SelectionSet),
+			Fields:  selectionSet2Fields(req, opd.Name, opd.SelectionSet),
 		}
 		structs = append(structs, s)
+		// 处理响应结果的结构体
+		structs = append(structs, resStructList...) // 把递归的加进来
 
 	}
 
@@ -119,18 +120,18 @@ func buildStructs(req *CodeGenRequest) []Struct {
 	}
 
 	// 处理响应结果的结构体
-	for _, filed := range fieldList {
-		fmt.Println(filed.Alias)
-		s := Struct{
-			// Table:   plugin.Identifier{Schema: schema.Name, Name: table.Rel.Name},
-			Name:    StructName(filed.Name), //
-			Comment: "res_struct",
-		}
-		s.Fields = selectionSet2Fields(req, filed.SelectionSet)
+	// for _, filed := range fieldList {
+	// 	fmt.Println(filed.Alias)
+	// 	s := Struct{
+	// 		// Table:   plugin.Identifier{Schema: schema.Name, Name: table.Rel.Name},
+	// 		Name:    StructName(filed.Name), //
+	// 		Comment: "res_struct",
+	// 	}
+	// 	s.Fields = selectionSet2Fields(req, filed.SelectionSet)
 
-		structs = append(structs, s)
-		fmt.Println(s)
-	}
+	// 	structs = append(structs, s)
+	// 	fmt.Println(s)
+	// }
 
 	// for _, schema := range req.Catalog.Schemas {
 	// 	for _, table := range schema.Tables {
@@ -154,7 +155,36 @@ func buildStructs(req *CodeGenRequest) []Struct {
 	return structs
 }
 
-func selectionSet2Fields(req *CodeGenRequest, set ast.SelectionSet) []Field {
+// var fieldList = []*ast.Field{}
+var resStructList []Struct
+
+//  optName 为响应的结构体加上前缀，避免重复
+func diguiResStruct(req *CodeGenRequest, optName string, root *ast.Field) {
+	if root.SelectionSet == nil {
+		return
+	}
+	// fieldList = append(fieldList, root)
+
+	for _, v := range root.SelectionSet {
+		filed, ok := v.(*ast.Field)
+		if ok {
+			if filed.SelectionSet != nil {
+				// 这里递归下
+				diguiResStruct(req, optName, filed)
+			}
+		}
+	}
+	s := Struct{
+		Table:   Identifier{Schema: "", Name: optName},
+		Name:    StructName(optName + root.Name), // 这里修改了对应查询响应的名字（但是应该怎么修改它的字段值的）
+		Comment: "res_struct",
+	}
+	s.Fields = selectionSet2Fields(req, optName, root.SelectionSet)
+
+	resStructList = append(resStructList, s)
+}
+
+func selectionSet2Fields(req *CodeGenRequest, optName string, set ast.SelectionSet) []Field {
 	fields := []Field{}
 	for _, selection := range set {
 		field2, ok := selection.(*ast.Field)
@@ -165,10 +195,11 @@ func selectionSet2Fields(req *CodeGenRequest, set ast.SelectionSet) []Field {
 
 			// TODO:特定情况下，修改下定义~ 这种定义方式不友好~
 			if field2.SelectionSet != nil {
+				// 如果不是标量，则给非标量增加前缀
 				if field2.Definition.Type.NamedType == "" {
-					field2.Definition.Type.Elem.NamedType = StructName(field2.Name)
+					field2.Definition.Type.Elem.NamedType = StructName(optName + field2.Name)
 				} else {
-					field2.Definition.Type.NamedType = StructName(field2.Name)
+					field2.Definition.Type.NamedType = StructName(optName + field2.Name)
 				}
 			}
 			gotypeName := goType(req, field2.Definition)
@@ -183,6 +214,27 @@ func selectionSet2Fields(req *CodeGenRequest, set ast.SelectionSet) []Field {
 	}
 	return fields
 }
+
+// func diguiFind2(optName string, root *ast.Field) {
+// 	if root.SelectionSet == nil {
+// 		return
+// 	}
+// 	root.Name = optName + root.Name // 这里修改了对应查询响应的名字
+// 	// root.Alias = optName + root.Alias
+// 	fieldList = append(fieldList, root)
+
+// 	for _, v := range root.SelectionSet {
+// 		filed, ok := v.(*ast.Field)
+// 		if ok {
+// 			if filed.SelectionSet != nil {
+// 				// fieldList = append(fieldList, filed)
+// 				// 这里递归下
+// 				diguiFind2(optName, filed)
+// 			}
+// 		}
+// 		// var _ = (ast.Field)(&container{})
+// 	}
+// }
 
 type goColumn struct {
 	id int

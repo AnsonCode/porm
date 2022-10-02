@@ -192,72 +192,72 @@ func generate(req *CodeGenRequest, structs []Struct, queries []Query) (*CodeGenR
 	return &resp, nil
 }
 
-func Generate() {
-	// Define a template.
-	sch, _ := os.ReadFile("../schema.graphql")
-	str, _ := os.ReadFile("../operations/query.graphql")
-	// doc, _ := parser.ParseQuery(&ast.Source{Input: string(str)})
-	schema := gqlparser.MustLoadSchema(&ast.Source{Input: string(sch)})
+// func Generate() {
+// 	// Define a template.
+// 	sch, _ := os.ReadFile("../schema.graphql")
+// 	str, _ := os.ReadFile("../operations/query.graphql")
+// 	// doc, _ := parser.ParseQuery(&ast.Source{Input: string(str)})
+// 	schema := gqlparser.MustLoadSchema(&ast.Source{Input: string(sch)})
 
-	doc, _ := gqlparser.LoadQuery(schema, string(str))
+// 	doc, _ := gqlparser.LoadQuery(schema, string(str))
 
-	// Create a new template and parse the letter into it.
-	opd := doc.Operations.ForName("")
+// 	// Create a new template and parse the letter into it.
+// 	opd := doc.Operations.ForName("")
 
-	// opd.Operation
-	for _, v := range opd.SelectionSet {
-		filed, ok := v.(*ast.Field)
-		if ok {
-			diguiFind2("T", filed)
-		}
-	}
-	for _, filed := range fieldList {
-		fmt.Println(filed.Alias)
-		for _, v := range filed.SelectionSet {
-			field2, ok := v.(*ast.Field)
-			if ok {
-				tpy := field2.Definition.Type.NamedType
-				if tpy == "" {
-					fmt.Println(field2.Alias, "[]", field2.Definition.Type.Elem.NamedType)
-				} else {
-					fmt.Println(field2.Alias, "*", tpy)
-				}
-			}
-		}
-	}
+// 	// opd.Operation
+// 	for _, v := range opd.SelectionSet {
+// 		filed, ok := v.(*ast.Field)
+// 		if ok {
+// 			diguiFind2("T", filed)
+// 		}
+// 	}
+// 	for _, filed := range fieldList {
+// 		fmt.Println(filed.Alias)
+// 		for _, v := range filed.SelectionSet {
+// 			field2, ok := v.(*ast.Field)
+// 			if ok {
+// 				tpy := field2.Definition.Type.NamedType
+// 				if tpy == "" {
+// 					fmt.Println(field2.Alias, "[]", field2.Definition.Type.Elem.NamedType)
+// 				} else {
+// 					fmt.Println(field2.Alias, "*", tpy)
+// 				}
+// 			}
+// 		}
+// 	}
 
-	for _, v := range opd.VariableDefinitions {
-		name := v.Definition.Name
-		if v.Definition.Kind != "SCALAR" {
-			res = append(res, name)
-			diguiFind(name, schema.Types)
-		}
-	}
-	fmt.Println(res)
-	gqlTypes := map[string]*ast.Definition{} // 保存所有需要的变量
+// 	for _, v := range opd.VariableDefinitions {
+// 		name := v.Definition.Name
+// 		if v.Definition.Kind != "SCALAR" {
+// 			res = append(res, name)
+// 			diguiFind(name, schema.Types)
+// 		}
+// 	}
+// 	fmt.Println(res)
+// 	gqlTypes := map[string]*ast.Definition{} // 保存所有需要的变量
 
-	// todo:合成
-	for _, v := range res {
-		d := schema.Types[v]
-		fmt.Println(d.Name)
-		gqlTypes[v] = schema.Types[v]
-	}
+// 	// todo:合成
+// 	for _, v := range res {
+// 		d := schema.Types[v]
+// 		fmt.Println(d.Name)
+// 		gqlTypes[v] = schema.Types[v]
+// 	}
 
-	fmt.Println(opd)
-	funcMap := template.FuncMap{
-		"lowerTitle": LowerTitle,
-		"Title":      Title,
-		"comment":    DoubleSlashComment,
-		"escape":     EscapeBacktick,
-	}
+// 	fmt.Println(opd)
+// 	funcMap := template.FuncMap{
+// 		"lowerTitle": LowerTitle,
+// 		"Title":      Title,
+// 		"comment":    DoubleSlashComment,
+// 		"escape":     EscapeBacktick,
+// 	}
 
-	t := template.Must(template.New("letter").Funcs(funcMap).ParseFS(templates, "templates/*.tmpl"))
+// 	t := template.Must(template.New("letter").Funcs(funcMap).ParseFS(templates, "templates/*.tmpl"))
 
-	Write(t, "operation", opd)
-	Write(t, "operation_out_type", fieldList)
+// 	Write(t, "operation", opd)
+// 	// Write(t, "operation_out_type", fieldList)
 
-	Write(t, "custom_type", gqlTypes)
-}
+// 	Write(t, "custom_type", gqlTypes)
+// }
 
 func Write(t *template.Template, name string, data any) {
 	var b bytes.Buffer
@@ -301,28 +301,6 @@ func diguiFind(defname string, all map[string]*ast.Definition) {
 	}
 }
 
-var fieldList = []*ast.Field{}
-
-func diguiFind2(optName string, root *ast.Field) {
-	if root.SelectionSet == nil {
-		return
-	}
-	root.Name = optName + root.Name
-	// root.Alias = optName + root.Alias
-	fieldList = append(fieldList, root)
-
-	for _, v := range root.SelectionSet {
-		filed, ok := v.(*ast.Field)
-		if ok {
-			if filed.SelectionSet != nil {
-				// fieldList = append(fieldList, filed)
-				// 这里递归下
-				diguiFind2(optName, filed)
-			}
-		}
-		// var _ = (ast.Field)(&container{})
-	}
-}
 func in(target string, str_array []string) bool {
 	for _, element := range str_array {
 		if target == element {

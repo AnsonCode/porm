@@ -7,19 +7,19 @@ type File struct {
 	Contents []byte `json:"contents,omitempty"`
 }
 
-type Override struct {
-	// name of the type to use, e.g. `github.com/segmentio/ksuid.KSUID` or `mymodule.Type`
-	CodeType string `protobuf:"bytes,1,opt,name=code_type,proto3" json:"code_type,omitempty"`
-	// name of the type to use, e.g. `text`
-	DbType string `protobuf:"bytes,3,opt,name=db_type,proto3" json:"db_type,omitempty"`
-	// True if the override should apply to a nullable database type
-	Nullable bool `protobuf:"varint,5,opt,name=nullable,proto3" json:"nullable,omitempty"`
-	// fully qualified name of the column, e.g. `accounts.id`
-	Column     string        `protobuf:"bytes,6,opt,name=column,proto3" json:"column,omitempty"`
-	Table      *Identifier   `protobuf:"bytes,7,opt,name=table,proto3" json:"table,omitempty"`
-	ColumnName string        `protobuf:"bytes,8,opt,name=column_name,proto3" json:"column_name,omitempty"`
-	GoType     *ParsedGoType `protobuf:"bytes,10,opt,name=go_type,json=goType,proto3" json:"go_type,omitempty"`
-}
+// type Override struct {
+// 	// name of the type to use, e.g. `github.com/segmentio/ksuid.KSUID` or `mymodule.Type`
+// 	CodeType string `protobuf:"bytes,1,opt,name=code_type,proto3" json:"code_type,omitempty"`
+// 	// name of the type to use, e.g. `text`
+// 	DbType string `protobuf:"bytes,3,opt,name=db_type,proto3" json:"db_type,omitempty"`
+// 	// True if the override should apply to a nullable database type
+// 	Nullable bool `protobuf:"varint,5,opt,name=nullable,proto3" json:"nullable,omitempty"`
+// 	// fully qualified name of the column, e.g. `accounts.id`
+// 	Column     string        `protobuf:"bytes,6,opt,name=column,proto3" json:"column,omitempty"`
+// 	Table      *Identifier   `protobuf:"bytes,7,opt,name=table,proto3" json:"table,omitempty"`
+// 	ColumnName string        `protobuf:"bytes,8,opt,name=column_name,proto3" json:"column_name,omitempty"`
+// 	GoType     *ParsedGoType `protobuf:"bytes,10,opt,name=go_type,json=goType,proto3" json:"go_type,omitempty"`
+// }
 
 type ParsedGoType struct {
 	ImportPath string            `protobuf:"bytes,1,opt,name=import_path,json=importPath,proto3" json:"import_path,omitempty"`
@@ -30,21 +30,21 @@ type ParsedGoType struct {
 }
 
 type Settings struct {
-	Version   string            `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
-	Engine    string            `protobuf:"bytes,2,opt,name=engine,proto3" json:"engine,omitempty"`
-	Schema    []string          `protobuf:"bytes,3,rep,name=schema,proto3" json:"schema,omitempty"`
-	Queries   []string          `protobuf:"bytes,4,rep,name=queries,proto3" json:"queries,omitempty"`
-	Rename    map[string]string `protobuf:"bytes,5,rep,name=rename,proto3" json:"rename,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	Overrides []*Override       `protobuf:"bytes,6,rep,name=overrides,proto3" json:"overrides,omitempty"`
-	Codegen   *Codegen          `protobuf:"bytes,12,opt,name=codegen,proto3" json:"codegen,omitempty"`
+	Version string            `json:"version,omitempty"`
+	Engine  string            `json:"engine,omitempty"`
+	Schema  []string          `json:"schema,omitempty"`
+	Queries []string          `json:"queries,omitempty"`
+	Rename  map[string]string `json:"rename,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	// Overrides []*Override       `json:"overrides,omitempty"`
+	Codegen *Codegen `json:"codegen,omitempty"`
 	// TODO: Refactor codegen settings
-	Go *GoCode `protobuf:"bytes,10,opt,name=go,proto3" json:"go,omitempty"`
+	Go *GoCode `json:"go,omitempty"`
 }
 
 type Codegen struct {
-	Out     string `protobuf:"bytes,1,opt,name=out,proto3" json:"out,omitempty"`
-	Plugin  string `protobuf:"bytes,2,opt,name=plugin,proto3" json:"plugin,omitempty"`
-	Options []byte `protobuf:"bytes,3,opt,name=options,proto3" json:"options,omitempty"`
+	Out     string `json:"out,omitempty"`
+	Plugin  string `json:"plugin,omitempty"`
+	Options []byte `json:"options,omitempty"`
 }
 
 type GoCode struct {
@@ -70,25 +70,25 @@ type GoCode struct {
 	EmitAllEnumValues         bool   `protobuf:"varint,20,opt,name=emit_all_enum_values,json=emitAllEnumValues,proto3" json:"emit_all_enum_values,omitempty"`
 }
 
-type Catalog struct {
-	Comment       string    `protobuf:"bytes,1,opt,name=comment,proto3" json:"comment,omitempty"`
-	DefaultSchema string    `protobuf:"bytes,2,opt,name=default_schema,json=defaultSchema,proto3" json:"default_schema,omitempty"`
-	Name          string    `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	Schemas       []*Schema `protobuf:"bytes,4,rep,name=schemas,proto3" json:"schemas,omitempty"`
-}
+// type Catalog struct {
+// 	Comment       string    `protobuf:"bytes,1,opt,name=comment,proto3" json:"comment,omitempty"`
+// 	DefaultSchema string    `protobuf:"bytes,2,opt,name=default_schema,json=defaultSchema,proto3" json:"default_schema,omitempty"`
+// 	Name          string    `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+// 	Schemas       []*Schema `protobuf:"bytes,4,rep,name=schemas,proto3" json:"schemas,omitempty"`
+// }
 
-type Schema struct {
-	Comment        string           `protobuf:"bytes,1,opt,name=comment,proto3" json:"comment,omitempty"`
-	Name           string           `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Tables         []*Table         `protobuf:"bytes,3,rep,name=tables,proto3" json:"tables,omitempty"`
-	Enums          []*Enum          `protobuf:"bytes,4,rep,name=enums,proto3" json:"enums,omitempty"`
-	CompositeTypes []*CompositeType `protobuf:"bytes,5,rep,name=composite_types,json=compositeTypes,proto3" json:"composite_types,omitempty"`
-}
+// type Schema struct {
+// 	Comment string `protobuf:"bytes,1,opt,name=comment,proto3" json:"comment,omitempty"`
+// 	Name    string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+// 	// Tables         []*Table         `protobuf:"bytes,3,rep,name=tables,proto3" json:"tables,omitempty"`
+// 	Enums          []*Enum          `protobuf:"bytes,4,rep,name=enums,proto3" json:"enums,omitempty"`
+// 	CompositeTypes []*CompositeType `protobuf:"bytes,5,rep,name=composite_types,json=compositeTypes,proto3" json:"composite_types,omitempty"`
+// }
 
-type CompositeType struct {
-	Name    string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Comment string `protobuf:"bytes,2,opt,name=comment,proto3" json:"comment,omitempty"`
-}
+// type CompositeType struct {
+// 	Name    string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+// 	Comment string `protobuf:"bytes,2,opt,name=comment,proto3" json:"comment,omitempty"`
+// }
 
 type Enum struct {
 	Name    string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
@@ -96,11 +96,11 @@ type Enum struct {
 	Comment string   `protobuf:"bytes,3,opt,name=comment,proto3" json:"comment,omitempty"`
 }
 
-type Table struct {
-	Rel     *Identifier `protobuf:"bytes,1,opt,name=rel,proto3" json:"rel,omitempty"`
-	Columns []*Column   `protobuf:"bytes,2,rep,name=columns,proto3" json:"columns,omitempty"`
-	Comment string      `protobuf:"bytes,3,opt,name=comment,proto3" json:"comment,omitempty"`
-}
+// type Table struct {
+// 	Rel     *Identifier `protobuf:"bytes,1,opt,name=rel,proto3" json:"rel,omitempty"`
+// 	Columns []*Column   `protobuf:"bytes,2,rep,name=columns,proto3" json:"columns,omitempty"`
+// 	Comment string      `protobuf:"bytes,3,opt,name=comment,proto3" json:"comment,omitempty"`
+// }
 
 type Identifier struct {
 	Catalog string `json:"catalog,omitempty"`
@@ -134,10 +134,10 @@ type Column struct {
 // 	InsertIntoTable *Identifier  `protobuf:"bytes,8,opt,name=insert_into_table,proto3" json:"insert_into_table,omitempty"`
 // }
 
-type Parameter struct {
-	Number int32   `protobuf:"varint,1,opt,name=number,proto3" json:"number,omitempty"`
-	Column *Column `protobuf:"bytes,2,opt,name=column,proto3" json:"column,omitempty"`
-}
+// type Parameter struct {
+// 	Number int32   `protobuf:"varint,1,opt,name=number,proto3" json:"number,omitempty"`
+// 	Column *Column `protobuf:"bytes,2,opt,name=column,proto3" json:"column,omitempty"`
+// }
 
 // sch, _ := os.ReadFile("../schema.graphql")
 // 	str, _ := os.ReadFile("../operations/query.graphql")
