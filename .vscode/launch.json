@@ -12,7 +12,8 @@
             "program": "${workspaceFolder}/main.go",
             "cwd": "${workspaceFolder}",
             "env": {
-                "PRISMA_CLIENT_GO_LOG":"info"
+                "PRISMA_CLIENT_GO_LOG":"info",
+                "DATABASE_URL_MYSQL":"mysql://root:shaoxiong123456@8.142.115.204:3306/wd"
             }
         }
     ]

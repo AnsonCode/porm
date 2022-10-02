@@ -22,32 +22,34 @@ import "github.com/vektah/gqlparser/v2/ast"
 // 	}
 // }
 
-func goType(req *CodeGenRequest, field *ast.FieldDefinition) string {
+func goType3(req *CodeGenRequest, typName string, field *ast.FieldDefinition) string {
 	col := &Column{
 		Name:    field.Name,
 		IsArray: field.Type.NamedType == "",
 		Type: &Identifier{
-			Name: field.Type.NamedType,
+			Name: typName,
 		},
 		NotNull: field.Type.NonNull,
-		Comment: "todo1",
+		Comment: "todo2",
 	}
-	if col.IsArray {
-		col.Type = &Identifier{
-			Name: field.Type.Elem.NamedType,
-		}
-	}
-	// if field.SelectionSet != nil {
-	// 			// 是否数组的处理
-	// 			gotypeName = StructName(field2.Name)
-	// 		}
-
 	typ := graphqlType(req, col)
 
 	if col.IsArray {
 		return "[]" + typ
 	}
 	return typ
+}
+
+func goType(req *CodeGenRequest, field *ast.FieldDefinition) string {
+	typName := field.Type.NamedType
+	isArray := typName == ""
+	// 说明是数组
+	if isArray {
+		typName = field.Type.Elem.NamedType
+	}
+
+	return goType3(req, typName, field)
+
 }
 
 func goType2(req *CodeGenRequest, variable *ast.VariableDefinition) string {
@@ -100,7 +102,7 @@ func graphqlType(req *CodeGenRequest, col *Column) string {
 
 	case "enum":
 		// TODO: Proper Enum support
-		return "string"
+		return "enum"
 
 	// case "date", "timestamp", "datetime", "time":
 	// 	if notNull {

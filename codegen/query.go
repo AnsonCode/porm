@@ -1,11 +1,7 @@
 package codegen
 
-import (
-	"fmt"
-	"strings"
-	// "github.com/kyleconroy/sqlc/internal/metadata"
-	// "github.com/kyleconroy/sqlc/internal/plugin"
-)
+// "github.com/kyleconroy/sqlc/internal/metadata"
+// "github.com/kyleconroy/sqlc/internal/plugin"
 
 type QueryValue struct {
 	Emit        bool
@@ -113,16 +109,16 @@ func (v QueryValue) UniqueFields() []Field {
 // 	return "\n" + strings.Join(out, ",\n")
 // }
 
-func (v QueryValue) ColumnNames() string {
-	if v.Struct == nil {
-		return fmt.Sprintf("[]string{%q}", v.Name)
-	}
-	escapedNames := make([]string, len(v.Struct.Fields))
-	for i, f := range v.Struct.Fields {
-		escapedNames[i] = fmt.Sprintf("%q", f.DBName)
-	}
-	return "[]string{" + strings.Join(escapedNames, ", ") + "}"
-}
+// func (v QueryValue) ColumnNames() string {
+// 	if v.Struct == nil {
+// 		return fmt.Sprintf("[]string{%q}", v.Name)
+// 	}
+// 	escapedNames := make([]string, len(v.Struct.Fields))
+// 	for i, f := range v.Struct.Fields {
+// 		escapedNames[i] = fmt.Sprintf("%q", f.DBName)
+// 	}
+// 	return "[]string{" + strings.Join(escapedNames, ", ") + "}"
+// }
 
 // func (v QueryValue) Scan() string {
 // 	var out []string

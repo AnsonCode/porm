@@ -26,7 +26,7 @@ func mustReadFile(name string) string {
 }
 
 func main() {
-	schema := testSdl()
+	_, schema := testSdl()
 	operationStr := mustReadFile("./operations/query3.graphql")
 
 	doc, err := gqlparser.LoadQuery(schema, operationStr)
@@ -40,14 +40,16 @@ func main() {
 	query.Connect()
 	defer query.Disconnect()
 
+	id := "1"
 	whe := &generate2.PostWhereInput{
 		ID: &generate2.StringFilter{
-			Equals: "1",
+			Equals: &id,
 			// Gt:     "ss",
 		},
 	}
 	ctx := context.TODO()
 	res, err2 := query.Test(ctx, whe, 3)
+
 	fmt.Println(res, err2)
 
 	// testDmmf()
@@ -67,7 +69,7 @@ func testDmmf() {
 	fmt.Println(dmmf.Datamodel)
 }
 
-func testSdl() *ast.Schema {
+func testSdl() ([]byte, *ast.Schema) {
 	engine := engine.NewQueryEngine(GLOBAL_SCHEME, false)
 	defer engine.Disconnect()
 	if err := engine.Connect(); err != nil {
@@ -80,10 +82,10 @@ func testSdl() *ast.Schema {
 	}
 	// fmt.Println(string(sdl))
 
-	// if err := os.WriteFile("schema.graphql", sdl, 0666); err != nil {
-	// 	panic(err)
-	// }
+	if err := os.WriteFile("schema2.graphql", sdl, 0666); err != nil {
+		panic(err)
+	}
 
 	schema := gqlparser.MustLoadSchema(&ast.Source{Input: string(sdl)})
-	return schema
+	return sdl, schema
 }

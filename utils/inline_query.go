@@ -30,6 +30,19 @@ func InlineQueryDocument(query *ast.QueryDocument, variable map[string]interface
 	return bufstr, nil
 }
 
+func FormatOperateionDocument(operate *ast.OperationDefinition) string {
+
+	query := &ast.QueryDocument{
+		Operations: ast.OperationList{operate},
+	}
+	var buf bytes.Buffer
+	formatter.NewFormatter(&buf).FormatQueryDocument(query)
+
+	bufstr := buf.String()
+
+	return bufstr
+}
+
 func InlineQuery(str string, variable map[string]interface{}) (string, error) {
 	query, err := parser.ParseQuery(&ast.Source{Input: str})
 	if err != nil {

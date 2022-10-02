@@ -7,8 +7,10 @@ import (
 )
 
 type Struct struct {
-	Table   Identifier
+	// Table   Identifier
 	Name    string
+	Kind    string
+	IsRes   bool // 标识当前结构是不是响应，如果是响应需要加上前缀
 	Fields  []Field
 	Comment string
 }

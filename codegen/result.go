@@ -3,62 +3,71 @@ package codegen
 import (
 	"fmt"
 	"sort"
-	"strings"
 
+	"github.com/AnsonCode/porm/utils"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
-// func buildEnums(req *plugin.CodeGenRequest) []Enum {
-// 	var enums []Enum
-// 	for _, schema := range req.Catalog.Schemas {
-// 		if schema.Name == "pg_catalog" {
-// 			continue
-// 		}
-// 		for _, enum := range schema.Enums {
-// 			var enumName string
-// 			if schema.Name == req.Catalog.DefaultSchema {
-// 				enumName = enum.Name
-// 			} else {
-// 				enumName = schema.Name + "_" + enum.Name
-// 			}
-// 			e := Enum{
-// 				Name:    StructName(enumName, req.Settings),
-// 				Comment: enum.Comment,
-// 			}
-// 			seen := make(map[string]struct{}, len(enum.Vals))
-// 			for i, v := range enum.Vals {
-// 				value := EnumReplace(v)
-// 				if _, found := seen[value]; found || value == "" {
-// 					value = fmt.Sprintf("value_%d", i)
-// 				}
-// 				e.Constants = append(e.Constants, Constant{
-// 					Name:  StructName(enumName+"_"+value, req.Settings),
-// 					Value: v,
-// 					Type:  e.Name,
-// 				})
-// 				seen[value] = struct{}{}
-// 			}
-// 			enums = append(enums, e)
-// 		}
-// 	}
-// 	if len(enums) > 0 {
-// 		sort.Slice(enums, func(i, j int) bool { return enums[i].Name < enums[j].Name })
-// 	}
-// 	return enums
-// }
+// Todo:待实现相关示例
+func buildEnums(req *CodeGenRequest) []Enum {
+	var enums []Enum
+	e := Enum{
+		Name:    StructName("test"),
+		Comment: "tes",
+	}
+
+	e.Constants = append(e.Constants, Constant{
+		Name:  StructName(e.Name + "_" + "test"),
+		Value: "test",
+		Type:  e.Name,
+	})
+	enums = append(enums, e)
+	// for _, schema := range req.Catalog.Schemas {
+	// 	if schema.Name == "pg_catalog" {
+	// 		continue
+	// 	}
+	// 	for _, enum := range schema.Enums {
+	// 		var enumName string
+	// 		if schema.Name == req.Catalog.DefaultSchema {
+	// 			enumName = enum.Name
+	// 		} else {
+	// 			enumName = schema.Name + "_" + enum.Name
+	// 		}
+	// 		e := Enum{
+	// 			Name:    StructName(enumName, req.Settings),
+	// 			Comment: enum.Comment,
+	// 		}
+	// 		seen := make(map[string]struct{}, len(enum.Vals))
+	// 		for i, v := range enum.Vals {
+	// 			value := EnumReplace(v)
+	// 			if _, found := seen[value]; found || value == "" {
+	// 				value = fmt.Sprintf("value_%d", i)
+	// 			}
+	// 			e.Constants = append(e.Constants, Constant{
+	// 				Name:  StructName(enumName+"_"+value, req.Settings),
+	// 				Value: v,
+	// 				Type:  e.Name,
+	// 			})
+	// 			seen[value] = struct{}{}
+	// 		}
+	// 		enums = append(enums, e)
+	// 	}
+	// }
+	if len(enums) > 0 {
+		sort.Slice(enums, func(i, j int) bool { return enums[i].Name < enums[j].Name })
+	}
+	return enums
+}
 
 func buildStructs(req *CodeGenRequest) []Struct {
 	var structs []Struct
-
-	gqlTypes := map[string]*ast.Definition{} // 保存所有需要的变量
-
 	for _, opd := range req.OperationList {
 		// 收集输入参数的类型
 		for _, v := range opd.VariableDefinitions {
 			name := v.Definition.Name
 			if v.Definition.Kind != "SCALAR" {
-				res = append(res, name)
-				diguiFind(name, req.Schema.Types)
+				inputStructNameList = append(inputStructNameList, name)
+				recursiveFindInputStructName(name, req.Schema.Types)
 			}
 		}
 
@@ -68,14 +77,18 @@ func buildStructs(req *CodeGenRequest) []Struct {
 		for _, v := range opd.SelectionSet {
 			filed, ok := v.(*ast.Field)
 			if ok {
+				if opd.Name == "reate" {
+					fmt.Println("debug")
+				}
 				// diguiFind2(opd.Name, filed)
-				diguiResStruct(req, opd.Name, filed)
+				recursiveResStruct(req, opd.Name, filed)
 			}
 		}
 
 		// 这里补充一个 整体的响应
 		s := Struct{
-			// Table:   plugin.Identifier{Schema: schema.Name, Name: table.Rel.Name},
+			IsRes: true,
+			// Table:   Identifier{Schema: "", Name: opd.Name},
 			Name:    StructName(opd.Name) + "Response", //
 			Comment: "res2_struct",
 			Fields:  selectionSet2Fields(req, opd.Name, opd.SelectionSet),
@@ -83,21 +96,20 @@ func buildStructs(req *CodeGenRequest) []Struct {
 		structs = append(structs, s)
 		// 处理响应结果的结构体
 		structs = append(structs, resStructList...) // 把递归的加进来
-
+		resStructList = []Struct{}                  //清空下
 	}
 
-	// todo:res 要复原？
-	for _, v := range res {
-		d := req.Schema.Types[v]
-		fmt.Println(d.Name)
-		gqlTypes[v] = req.Schema.Types[v]
-	}
 	// 处理输入参数的结构体
-	for structName, def := range gqlTypes {
+	for _, structName := range inputStructNameList {
+		d := req.Schema.Types[structName]
+		fmt.Println(d.Name)
+		def := req.Schema.Types[structName]
 		s := Struct{
+			IsRes: false,
+			Kind:  string(def.Kind),
 			// Table:   plugin.Identifier{Schema: schema.Name, Name: table.Rel.Name},
 			Name:    StructName(structName),
-			Comment: "input_struct",
+			Comment: string(def.Kind),
 		}
 		for _, field := range def.Fields {
 
@@ -155,29 +167,33 @@ func buildStructs(req *CodeGenRequest) []Struct {
 	return structs
 }
 
-// var fieldList = []*ast.Field{}
 var resStructList []Struct
 
 //  optName 为响应的结构体加上前缀，避免重复
-func diguiResStruct(req *CodeGenRequest, optName string, root *ast.Field) {
+func recursiveResStruct(req *CodeGenRequest, optName string, root *ast.Field) {
 	if root.SelectionSet == nil {
 		return
 	}
-	// fieldList = append(fieldList, root)
-
 	for _, v := range root.SelectionSet {
 		filed, ok := v.(*ast.Field)
 		if ok {
 			if filed.SelectionSet != nil {
 				// 这里递归下
-				diguiResStruct(req, optName, filed)
+				recursiveResStruct(req, optName, filed)
 			}
 		}
 	}
+
+	kind := string(root.ObjectDefinition.Kind) + "_" + root.ObjectDefinition.Name + "_" + "PART"
+	if kind == "OBJECT_Mutation_PART" {
+		fmt.Println("xx")
+	}
 	s := Struct{
-		Table:   Identifier{Schema: "", Name: optName},
-		Name:    StructName(optName + root.Name), // 这里修改了对应查询响应的名字（但是应该怎么修改它的字段值的）
-		Comment: "res_struct",
+		IsRes: true,
+		Kind:  kind,
+		// Table:   Identifier{Schema: "", Name: optName},
+		Name:    StructName(optName) + StructName(root.Name), // 这里修改了对应查询响应的名字（但是应该怎么修改它的字段值的）
+		Comment: kind,
 	}
 	s.Fields = selectionSet2Fields(req, optName, root.SelectionSet)
 
@@ -192,27 +208,70 @@ func selectionSet2Fields(req *CodeGenRequest, optName string, set ast.SelectionS
 			tags := map[string]string{}
 			tags["json"] = JSONTagName(field2.Alias, req.Settings)
 			// addExtraGoStructTags(tags, req, column)
-
-			// TODO:特定情况下，修改下定义~ 这种定义方式不友好~
-			if field2.SelectionSet != nil {
-				// 如果不是标量，则给非标量增加前缀
-				if field2.Definition.Type.NamedType == "" {
-					field2.Definition.Type.Elem.NamedType = StructName(optName + field2.Name)
-				} else {
-					field2.Definition.Type.NamedType = StructName(optName + field2.Name)
-				}
-			}
+			isObject := field2.SelectionSet != nil
 			gotypeName := goType(req, field2.Definition)
+			fieldName := StructName(field2.Name)
+			// 如果是对象，名字要处理下
+			if isObject {
+				typName := StructName(optName) + StructName(field2.Name)
+				gotypeName = goType3(req, typName, field2.Definition)
+				// gotypeName = "*" + StructName(optName) + StructName(field2.Name)
+			}
 
 			fields = append(fields, Field{
-				Name:    StructName(field2.Alias), //StructName(column.Name)
-				Type:    gotypeName,
-				Tags:    tags,
+				Name: fieldName, //StructName(column.Name)
+				// DBName:   optName,
+				Type:     gotypeName,
+				Tags:     tags,
+				IsObject: isObject,
+				// Struct: , // 应该查找出它的对象
 				Comment: "-",
 			})
 		}
 	}
 	return fields
+}
+
+// 死循环了~
+var inputStructNameList = []string{}
+
+// var defaultGqlDefinitionNamedType = []string{"StringFilter", "StringNullableFilter", "DateTimeFilter", "BoolFilter"}
+// String  DateTime Boolean
+var defaultGqlDefinitionNamedType = []string{"String", "DateTime", "Boolean", "Float", "Int", "enum"}
+
+func recursiveFindInputStructName(defname string, all map[string]*ast.Definition) {
+	def, ok := all[defname]
+	if !ok {
+		fmt.Println(defname)
+		return
+	}
+	for _, v2 := range def.Fields {
+		namedType := v2.Type.NamedType
+		if namedType == "" {
+			namedType = v2.Type.Elem.NamedType
+		}
+		// 默认的忽略
+		if in(namedType, defaultGqlDefinitionNamedType) {
+			continue
+		}
+		// 已经加进去的忽略
+		if in(namedType, inputStructNameList) {
+			continue
+		}
+		inputStructNameList = append(inputStructNameList, namedType)
+		// 还要继续遍历（递归下）
+		recursiveFindInputStructName(namedType, all)
+		// res = append(res, childres...)
+	}
+}
+
+func in(target string, str_array []string) bool {
+	for _, element := range str_array {
+		if target == element {
+			return true
+		}
+	}
+	return false
 }
 
 // func diguiFind2(optName string, root *ast.Field) {
@@ -236,10 +295,10 @@ func selectionSet2Fields(req *CodeGenRequest, optName string, set ast.SelectionS
 // 	}
 // }
 
-type goColumn struct {
-	id int
-	// *plugin.Column
-}
+// type goColumn struct {
+// 	id int
+// 	// *plugin.Column
+// }
 
 // func columnName(c *plugin.Column, pos int) string {
 // 	if c.Name != "" {
@@ -255,19 +314,19 @@ type goColumn struct {
 // 	return fmt.Sprintf("dollar_%d", p.Number)
 // }
 
-func argName(name string) string {
-	out := ""
-	for i, p := range strings.Split(name, "_") {
-		if i == 0 {
-			out += strings.ToLower(p)
-		} else if p == "id" {
-			out += "ID"
-		} else {
-			out += strings.Title(p)
-		}
-	}
-	return out
-}
+// func argName(name string) string {
+// 	out := ""
+// 	for i, p := range strings.Split(name, "_") {
+// 		if i == 0 {
+// 			out += strings.ToLower(p)
+// 		} else if p == "id" {
+// 			out += "ID"
+// 		} else {
+// 			out += strings.Title(p)
+// 		}
+// 	}
+// 	return out
+// }
 
 func buildQueries(req *CodeGenRequest, structs []Struct) ([]Query, error) {
 	qs := make([]Query, 0, len(req.OperationList))
@@ -277,20 +336,20 @@ func buildQueries(req *CodeGenRequest, structs []Struct) ([]Query, error) {
 			continue
 		}
 
-		var constantName string
+		// var constantName string
 		// if req.Settings.Go.EmitExportedQueries {
 		// 	constantName = Title(query.Name)
 		// } else {
-		constantName = LowerTitle(query.Name)
+		// constantName = LowerTitle(query.Name)
 		// }
 
 		gq := Query{
 			// Cmd:          query.Cmd,
-			ConstantName: constantName,
+			ConstantName: LowerTitle(query.Name),
 			FieldName:    LowerTitle(query.Name) + "Stmt",
-			MethodName:   query.Name,
-			SourceName:   query.Name, // TODO：这里要完善
-			SQL:          query.Position.Src.Input,
+			MethodName:   Title(query.Name),
+			SourceName:   query.Name,                            // TODO：这里要完善
+			SQL:          utils.FormatOperateionDocument(query), // TODO:这里要重新读取
 			Comments:     []string{string(query.Operation)},
 			// Table:        query.InsertIntoTable,
 		}
@@ -309,7 +368,7 @@ func buildQueries(req *CodeGenRequest, structs []Struct) ([]Query, error) {
 
 		// 这里开始构造方法的返回结果
 		gs := &Struct{
-			Name: query.Name + "Response",
+			Name: StructName(query.Name) + "Response",
 		}
 		for _, selection := range query.SelectionSet {
 			field3, ok := selection.(*ast.Field)
@@ -324,7 +383,7 @@ func buildQueries(req *CodeGenRequest, structs []Struct) ([]Query, error) {
 		}
 		gq.Ret = QueryValue{
 			Emit:   true,
-			Name:   query.Name + "Response",
+			Name:   gs.Name,
 			Struct: gs,
 			// SQLPackage:  sqlpkg,
 			EmitPointer: req.Settings.Go.EmitResultStructPointers,

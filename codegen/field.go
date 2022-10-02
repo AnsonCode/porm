@@ -7,11 +7,13 @@ import (
 )
 
 type Field struct {
-	Name    string // CamelCased name for Go
-	DBName  string // Name as used in the DB
-	Type    string
-	Tags    map[string]string
-	Comment string
+	Name string // CamelCased name for Go
+	// DBName   string // Name as used in the DB
+	Type     string
+	Tags     map[string]string
+	Comment  string
+	IsObject bool //  标识该字段是否为对象
+	// Struct   *Struct // 关联哪个对象
 }
 
 func (gf Field) Tag() string {

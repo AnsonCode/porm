@@ -90,11 +90,11 @@ type GoCode struct {
 // 	Comment string `protobuf:"bytes,2,opt,name=comment,proto3" json:"comment,omitempty"`
 // }
 
-type Enum struct {
-	Name    string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Vals    []string `protobuf:"bytes,2,rep,name=vals,proto3" json:"vals,omitempty"`
-	Comment string   `protobuf:"bytes,3,opt,name=comment,proto3" json:"comment,omitempty"`
-}
+// type Enum struct {
+// 	Name    string   `json:"name,omitempty"`
+// 	Vals    []string `json:"vals,omitempty"`
+// 	Comment string   `json:"comment,omitempty"`
+// }
 
 // type Table struct {
 // 	Rel     *Identifier `protobuf:"bytes,1,opt,name=rel,proto3" json:"rel,omitempty"`
@@ -152,7 +152,7 @@ type CodeGenRequest struct {
 
 	// Catalog     *Catalog `json:"catalog,omitempty"`
 	// Queries     []*Query `json:"queries,omitempty"`
-	SqlcVersion string `json:"sqlc_version,omitempty"`
+	PormVersion string `json:"porm_version,omitempty"`
 }
 
 type CodeGenResponse struct {

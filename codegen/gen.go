@@ -16,13 +16,11 @@ import (
 	"github.com/vektah/gqlparser/v2"
 )
 
-var defaultGqlDefinitionNamedType = []string{"StringFilter", "StringNullableFilter", "DateTimeFilter", "BoolFilter"}
-
 func Read() {
 
 	// Define a template.
 	sch, _ := os.ReadFile("../schema.graphql")
-	str, _ := os.ReadFile("../operations/query.graphql")
+	str, _ := os.ReadFile("../operations/create.graphql")
 	// doc, _ := parser.ParseQuery(&ast.Source{Input: string(str)})
 	schema := gqlparser.MustLoadSchema(&ast.Source{Input: string(sch)})
 
@@ -34,18 +32,35 @@ func Read() {
 	req := &CodeGenRequest{
 		Schema:        schema,
 		OperationList: doc.Operations,
-		SqlcVersion:   "test",
+		PormVersion:   "porm_V1.20",
 		Settings: &Settings{
 			Go: &GoCode{
 				Package: "generate2",
 			},
 		},
 	}
+	valid(req)
 	ctx := context.TODO()
 	Generate2(ctx, req)
 }
+
+func valid(req *CodeGenRequest) {
+	chars := req.OperationList
+
+	for i := 0; i < len(chars); i++ {
+		if req.OperationList[i].Name == "" {
+			fmt.Println("操作必须命名，未命名操作已忽略")
+			chars = append(chars[:i], chars[i+1:]...)
+			i-- // form the remove item index to start iterate next item
+		}
+	}
+	req.OperationList = chars
+	fmt.Printf("%+v num:%v", len(chars), len(req.OperationList))
+
+}
+
 func Generate2(ctx context.Context, req *CodeGenRequest) (*CodeGenResponse, error) {
-	// enums := buildEnums(req)
+	enums := buildEnums(req)
 	structs := buildStructs(req)
 	fmt.Println(structs)
 
@@ -55,7 +70,7 @@ func Generate2(ctx context.Context, req *CodeGenRequest) (*CodeGenResponse, erro
 	}
 	fmt.Println(queries)
 
-	return generate(req, structs, queries)
+	return generate(req, enums, structs, queries)
 }
 
 type tmplCtx struct {
@@ -77,8 +92,7 @@ func (t *tmplCtx) OutputQuery(sourceName string) bool {
 	return t.SourceName == sourceName
 }
 
-// enums []Enum,
-func generate(req *CodeGenRequest, structs []Struct, queries []Query) (*CodeGenResponse, error) {
+func generate(req *CodeGenRequest, enums []Enum, structs []Struct, queries []Query) (*CodeGenResponse, error) {
 	// i := &importer{
 	// 	Settings: req.Settings,
 	// 	Queries:  queries,
@@ -109,9 +123,9 @@ func generate(req *CodeGenRequest, structs []Struct, queries []Query) (*CodeGenR
 		Q:           "`",
 		Package:     golang.Package,
 		GoQueries:   queries,
-		Enums:       []Enum{},
+		Enums:       enums,
 		Structs:     structs,
-		PormVersion: req.SqlcVersion,
+		PormVersion: req.PormVersion,
 	}
 
 	output := map[string]string{}
@@ -190,122 +204,4 @@ func generate(req *CodeGenRequest, structs []Struct, queries []Query) (*CodeGenR
 	}
 
 	return &resp, nil
-}
-
-// func Generate() {
-// 	// Define a template.
-// 	sch, _ := os.ReadFile("../schema.graphql")
-// 	str, _ := os.ReadFile("../operations/query.graphql")
-// 	// doc, _ := parser.ParseQuery(&ast.Source{Input: string(str)})
-// 	schema := gqlparser.MustLoadSchema(&ast.Source{Input: string(sch)})
-
-// 	doc, _ := gqlparser.LoadQuery(schema, string(str))
-
-// 	// Create a new template and parse the letter into it.
-// 	opd := doc.Operations.ForName("")
-
-// 	// opd.Operation
-// 	for _, v := range opd.SelectionSet {
-// 		filed, ok := v.(*ast.Field)
-// 		if ok {
-// 			diguiFind2("T", filed)
-// 		}
-// 	}
-// 	for _, filed := range fieldList {
-// 		fmt.Println(filed.Alias)
-// 		for _, v := range filed.SelectionSet {
-// 			field2, ok := v.(*ast.Field)
-// 			if ok {
-// 				tpy := field2.Definition.Type.NamedType
-// 				if tpy == "" {
-// 					fmt.Println(field2.Alias, "[]", field2.Definition.Type.Elem.NamedType)
-// 				} else {
-// 					fmt.Println(field2.Alias, "*", tpy)
-// 				}
-// 			}
-// 		}
-// 	}
-
-// 	for _, v := range opd.VariableDefinitions {
-// 		name := v.Definition.Name
-// 		if v.Definition.Kind != "SCALAR" {
-// 			res = append(res, name)
-// 			diguiFind(name, schema.Types)
-// 		}
-// 	}
-// 	fmt.Println(res)
-// 	gqlTypes := map[string]*ast.Definition{} // 保存所有需要的变量
-
-// 	// todo:合成
-// 	for _, v := range res {
-// 		d := schema.Types[v]
-// 		fmt.Println(d.Name)
-// 		gqlTypes[v] = schema.Types[v]
-// 	}
-
-// 	fmt.Println(opd)
-// 	funcMap := template.FuncMap{
-// 		"lowerTitle": LowerTitle,
-// 		"Title":      Title,
-// 		"comment":    DoubleSlashComment,
-// 		"escape":     EscapeBacktick,
-// 	}
-
-// 	t := template.Must(template.New("letter").Funcs(funcMap).ParseFS(templates, "templates/*.tmpl"))
-
-// 	Write(t, "operation", opd)
-// 	// Write(t, "operation_out_type", fieldList)
-
-// 	Write(t, "custom_type", gqlTypes)
-// }
-
-func Write(t *template.Template, name string, data any) {
-	var b bytes.Buffer
-	w := bufio.NewWriter(&b)
-	if err := t.ExecuteTemplate(w, name+".tmpl", data); err != nil {
-		panic(err)
-	}
-	w.Flush()
-	code, _ := format.Source(b.Bytes())
-
-	if err := ioutil.WriteFile("./generate/"+name+".go", code, 0666); err != nil {
-		panic(err)
-	}
-}
-
-// 死循环了~
-var res = []string{}
-
-func diguiFind(defname string, all map[string]*ast.Definition) {
-	def, ok := all[defname]
-	if !ok {
-		fmt.Println(defname)
-		return
-	}
-	for _, v2 := range def.Fields {
-		if v2.Type.NamedType == "" {
-			continue
-		}
-		// 默认的忽略
-		if in(v2.Type.NamedType, defaultGqlDefinitionNamedType) {
-			continue
-		}
-		// 已经加进去的忽略
-		if in(v2.Type.NamedType, res) {
-			continue
-		}
-		res = append(res, v2.Type.NamedType)
-		// 还要继续遍历（递归下）
-		diguiFind(v2.Type.NamedType, all)
-		// res = append(res, childres...)
-	}
-}
-
-func in(target string, str_array []string) bool {
-	for _, element := range str_array {
-		if target == element {
-			return true
-		}
-	}
-	return false
 }

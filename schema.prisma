@@ -1,7 +1,9 @@
 datasource db {
     // could be postgresql or mysql
-    provider = "sqlite"
-    url      = "file:dev.db"
+    // provider = "sqlite"
+    // url      = "file:dev.db"
+    provider = "mysql"
+    url      = env("DATABASE_URL_MYSQL")
 }
 
 generator db {
@@ -28,7 +30,14 @@ model User {
     updatedAt DateTime @updatedAt
     name      String
     gender    Boolean
+    sex       Sex
     desc      String?
 
     Post Post[]
+}
+
+enum Sex {
+    MALE
+    FEMAL
+    UNKOWN
 }
