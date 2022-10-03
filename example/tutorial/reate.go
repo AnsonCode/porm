@@ -3,7 +3,7 @@
 //   sqlc porm_V1.20
 // source: reate
 
-package generate2
+package tutorial
 
 import (
 	"context"

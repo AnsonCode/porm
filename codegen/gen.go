@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"go/format"
-	"io/ioutil"
 	"os"
 	"strings"
 	"text/template"
@@ -56,7 +55,6 @@ func valid(req *CodeGenRequest) {
 	}
 	req.OperationList = chars
 	fmt.Printf("%+v num:%v", len(chars), len(req.OperationList))
-
 }
 
 func Generate2(ctx context.Context, req *CodeGenRequest) (*CodeGenResponse, error) {
@@ -160,7 +158,6 @@ func generate(req *CodeGenRequest, enums []Enum, structs []Struct, queries []Que
 	// if golang.OutputDbFileName != "" {
 	// 	dbFileName = golang.OutputDbFileName
 	// }
-	modelsFileName := "models.go"
 	// if golang.OutputModelsFileName != "" {
 	// 	modelsFileName = golang.OutputModelsFileName
 	// }
@@ -169,9 +166,16 @@ func generate(req *CodeGenRequest, enums []Enum, structs []Struct, queries []Que
 	// 	querierFileName = golang.OutputQuerierFileName
 	// }
 
+	// if err := execute(".gitignore", "gitignore.tmpl"); err != nil {
+	// 	return nil, err
+	// }
+	if err := execute("engine", "engine.tmpl"); err != nil {
+		return nil, err
+	}
 	// if err := execute(dbFileName, "dbFile"); err != nil {
 	// 	return nil, err
 	// }
+	modelsFileName := "models.go"
 	if err := execute(modelsFileName, "modelsFile"); err != nil {
 		return nil, err
 	}
@@ -198,9 +202,6 @@ func generate(req *CodeGenRequest, enums []Enum, structs []Struct, queries []Que
 			Name:     filename,
 			Contents: []byte(code),
 		})
-		if err := ioutil.WriteFile("./generate2/"+filename+".go", []byte(code), 0666); err != nil {
-			panic(err)
-		}
 	}
 
 	return &resp, nil

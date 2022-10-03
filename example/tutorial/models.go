@@ -2,7 +2,7 @@
 // versions:
 //   sqlc porm_V1.20
 
-package generate2
+package tutorial
 
 import "time"
 
@@ -151,6 +151,7 @@ type PostListRelationFilter struct {
 	None *PostWhereInput `json:"none,omitempty"`
 }
 
+
 // INPUT_OBJECT
 type PostWhereInput struct {
 	// df
@@ -244,7 +245,7 @@ type StringNullableFilter struct {
 }
 
 // OBJECT_Post_PART
-type TestAuthor struct {
+type Test2Author struct {
 	// -
 	Desc *string `json:"desc"`
 	// -
@@ -254,7 +255,7 @@ type TestAuthor struct {
 }
 
 // OBJECT_Query_PART
-type TestFindManyPost struct {
+type Test2FindManyPost struct {
 	// -
 	ID string `json:"id"`
 	// -
@@ -262,13 +263,111 @@ type TestFindManyPost struct {
 	// -
 	Title string `json:"title"`
 	// -
-	Author *TestAuthor `json:"author"`
+	Author *Test2Author `json:"author"`
+}
+
+// res2_struct
+type Test2Response struct {
+	// -
+	FindManyPost []*Test2FindManyPost `json:"findManyPost"`
+}
+
+// OBJECT_Post_PART
+type Test3Author struct {
+	// -
+	Desc *string `json:"desc"`
+	// -
+	ID string `json:"id"`
+}
+
+// OBJECT_Query_PART
+type Test3FindManyPost struct {
+	// -
+	ID string `json:"id"`
+	// -
+	Published bool `json:"published"`
+	// -
+	Title string `json:"title"`
+	// -
+	Author *Test3Author `json:"author"`
+}
+
+// res2_struct
+type Test3Response struct {
+	// -
+	FindManyPost []*Test3FindManyPost `json:"findManyPost"`
+}
+
+// OBJECT_Post_PART
+type Test4Author struct {
+	// -
+	Desc *string `json:"desc"`
+	// -
+	ID string `json:"id"`
+}
+
+// OBJECT_Query_PART
+type Test4FindManyPost struct {
+	// -
+	ID string `json:"id"`
+	// -
+	UpdatedAt *DateTime `json:"updatedAt"`
+	// -
+	Title string `json:"title"`
+	// -
+	Author *Test4Author `json:"author"`
+}
+
+// res2_struct
+type Test4Response struct {
+	// -
+	FindManyPost []*Test4FindManyPost `json:"findManyPost"`
+}
+
+// OBJECT_Post_PART
+type Test5Author struct {
+	// -
+	Desc *string `json:"desc"`
+	// -
+	ID string `json:"id"`
+}
+
+// OBJECT_Query_PART
+type Test5FindManyPost struct {
+	// -
+	ID string `json:"id"`
+	// -
+	Title string `json:"title"`
+	// -
+	Author *Test5Author `json:"author"`
+}
+
+// res2_struct
+type Test5Response struct {
+	// -
+	FindManyPost []*Test5FindManyPost `json:"findManyPost"`
+}
+
+// OBJECT_Query_PART
+type TestFindUniquePost struct {
+	// -
+	ID string `json:"id"`
+	// -
+	CreatedAt *DateTime `json:"createdAt"`
+	// -
+	UpdatedAt *DateTime `json:"updatedAt"`
+	// -
+	Title string `json:"title"`
+	// -
+	Published bool `json:"published"`
+	// -
+	Desc *string `json:"desc"`
 }
 
 // res2_struct
 type TestResponse struct {
 	// -
-	FindManyPost []*TestFindManyPost `json:"findManyPost"`
+	FindUniquePost *TestFindUniquePost `json:"result"`
 }
 
 // INPUT_OBJECT

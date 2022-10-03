@@ -1,6 +1,0 @@
-query Foo($flag: Boolean!) {
-	...Bar
-}
-fragment Bar on Query {
-	bar @include(if: $flag)
-}

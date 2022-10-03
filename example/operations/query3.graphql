@@ -1,0 +1,12 @@
+# Write your query or mutation here
+
+query Test5($tak: Int!) {
+  findManyPost(take: $tak, skip: 0) {
+    id
+    title
+    author {
+      desc
+      id
+    }
+  }
+}
