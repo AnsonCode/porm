@@ -8,8 +8,6 @@ package tutorial
 import (
 	"context"
 	"fmt"
-
-	"github.com/AnsonCode/porm/utils"
 )
 
 const test = `# name: Test 
@@ -35,7 +33,7 @@ func (t Queries) Test(ctx context.Context, param1 string) (res *TestResponse, er
 		"param1": param1, //string
 
 	}
-	qry, _ := utils.InlineQuery(test, input) //这里要优化？
+	qry, _ := InlineQuery(test, input) //这里要优化？
 	err = Do(ctx, t.e, qry, &res)
 	if err != nil {
 		fmt.Println(err)

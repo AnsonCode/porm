@@ -151,7 +151,6 @@ type PostListRelationFilter struct {
 	None *PostWhereInput `json:"none,omitempty"`
 }
 
-
 // INPUT_OBJECT
 type PostWhereInput struct {
 	// df

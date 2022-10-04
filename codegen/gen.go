@@ -59,7 +59,7 @@ func valid(req *CodeGenRequest) {
 
 func Generate2(ctx context.Context, req *CodeGenRequest) (*CodeGenResponse, error) {
 	// enums := buildEnums(req)
-	structs, enums := buildStructs(req)
+	structs, enums := buildStructsAndEnums(req)
 	fmt.Println(structs)
 
 	queries, err := buildQueries(req, structs)

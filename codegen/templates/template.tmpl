@@ -58,8 +58,6 @@ package {{.Package}}
 import (
 	"context"
 	"fmt"
-
-	"github.com/AnsonCode/porm/utils"
 )
 {{template "queryCode" . }}
 {{end}}
@@ -88,7 +86,7 @@ import (
 			"{{.Name}}": {{.Name}},//{{.Typ}}
 			{{ end }}
 		}
-		qry, _ := utils.InlineQuery({{.ConstantName}}, input) //这里要优化？
+		qry, _ := InlineQuery({{.ConstantName}}, input) //这里要优化？
 		err = Do(ctx, t.e, qry, &res)
 		if err != nil {
 			fmt.Println(err)

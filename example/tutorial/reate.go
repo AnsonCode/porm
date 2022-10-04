@@ -8,8 +8,6 @@ package tutorial
 import (
 	"context"
 	"fmt"
-
-	"github.com/AnsonCode/porm/utils"
 )
 
 const reate = `# name: Reate 
@@ -39,7 +37,7 @@ func (t Queries) Reate(ctx context.Context, title string, published bool, userId
 		"userId": userId, //string
 
 	}
-	qry, _ := utils.InlineQuery(reate, input) //这里要优化？
+	qry, _ := InlineQuery(reate, input) //这里要优化？
 	err = Do(ctx, t.e, qry, &res)
 	if err != nil {
 		fmt.Println(err)

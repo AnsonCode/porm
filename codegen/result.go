@@ -8,66 +8,22 @@ import (
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
-// Todo:待实现相关示例
-func buildEnums(req *CodeGenRequest) []Enum {
-	var enums []Enum
-	e := Enum{
-		Name:    StructName("test"),
-		Comment: "tes",
-	}
-
-	e.Constants = append(e.Constants, Constant{
-		Name:  StructName(e.Name + "_" + "test"),
-		Value: "test",
-		Type:  e.Name,
-	})
-	enums = append(enums, e)
-	// for _, schema := range req.Catalog.Schemas {
-	// 	if schema.Name == "pg_catalog" {
-	// 		continue
-	// 	}
-	// 	for _, enum := range schema.Enums {
-	// 		var enumName string
-	// 		if schema.Name == req.Catalog.DefaultSchema {
-	// 			enumName = enum.Name
-	// 		} else {
-	// 			enumName = schema.Name + "_" + enum.Name
-	// 		}
-	// 		e := Enum{
-	// 			Name:    StructName(enumName, req.Settings),
-	// 			Comment: enum.Comment,
-	// 		}
-	// 		seen := make(map[string]struct{}, len(enum.Vals))
-	// 		for i, v := range enum.Vals {
-	// 			value := EnumReplace(v)
-	// 			if _, found := seen[value]; found || value == "" {
-	// 				value = fmt.Sprintf("value_%d", i)
-	// 			}
-	// 			e.Constants = append(e.Constants, Constant{
-	// 				Name:  StructName(enumName+"_"+value, req.Settings),
-	// 				Value: v,
-	// 				Type:  e.Name,
-	// 			})
-	// 			seen[value] = struct{}{}
-	// 		}
-	// 		enums = append(enums, e)
-	// 	}
-	// }
-	if len(enums) > 0 {
-		sort.Slice(enums, func(i, j int) bool { return enums[i].Name < enums[j].Name })
-	}
-	return enums
-}
-
-func buildStructs(req *CodeGenRequest) ([]Struct, []Enum) {
+func buildStructsAndEnums(req *CodeGenRequest) ([]Struct, []Enum) {
 	var structs []Struct
+
+	var inputStructNameList []string
+
 	for _, opd := range req.OperationList {
 		// 收集输入参数的类型
 		for _, v := range opd.VariableDefinitions {
 			name := v.Definition.Name
 			if v.Definition.Kind != "SCALAR" {
-				inputStructNameList = append(inputStructNameList, name)
-				recursiveFindInputStructName(name, req.Schema.Types)
+				// 这个地方追加时，也要判断下
+				if !in(name, inputStructNameList) {
+					inputStructNameList = append(inputStructNameList, name)
+				}
+				// TODO:优化递归方法
+				recursiveFindInputStructName(name, req.Schema.Types, &inputStructNameList)
 			}
 		}
 
@@ -81,7 +37,7 @@ func buildStructs(req *CodeGenRequest) ([]Struct, []Enum) {
 					fmt.Println("debug")
 				}
 				// TODO: 递归的方法尽量不用全局变量
-				recursiveResStruct(req, opd.Name, filed)
+				recursiveResStruct(req, opd.Name, filed, &structs)
 			}
 		}
 
@@ -95,8 +51,8 @@ func buildStructs(req *CodeGenRequest) ([]Struct, []Enum) {
 		}
 		structs = append(structs, s)
 		// 处理响应结果的结构体
-		structs = append(structs, resStructList...) // 把递归的加进来
-		resStructList = []Struct{}                  //清空下
+		// structs = append(structs, structs...) // 把递归的加进来
+		// structs = []Struct{}                  //清空下
 	}
 
 	var enums []Enum
@@ -164,10 +120,8 @@ func buildStruct(req *CodeGenRequest, def *ast.Definition) *Struct {
 	return &s
 }
 
-var resStructList []Struct
-
 //  optName 为响应的结构体加上前缀，避免重复
-func recursiveResStruct(req *CodeGenRequest, optName string, root *ast.Field) {
+func recursiveResStruct(req *CodeGenRequest, optName string, root *ast.Field, ret *[]Struct) {
 	if root.SelectionSet == nil {
 		return
 	}
@@ -176,7 +130,7 @@ func recursiveResStruct(req *CodeGenRequest, optName string, root *ast.Field) {
 		if ok {
 			if filed.SelectionSet != nil {
 				// 这里递归下
-				recursiveResStruct(req, optName, filed)
+				recursiveResStruct(req, optName, filed, ret)
 			}
 		}
 	}
@@ -194,7 +148,7 @@ func recursiveResStruct(req *CodeGenRequest, optName string, root *ast.Field) {
 	}
 	s.Fields = selectionSet2Fields(req, optName, root.SelectionSet)
 
-	resStructList = append(resStructList, s)
+	*ret = append(*ret, s)
 }
 
 func selectionSet2Fields(req *CodeGenRequest, optName string, set ast.SelectionSet) []Field {
@@ -229,19 +183,18 @@ func selectionSet2Fields(req *CodeGenRequest, optName string, set ast.SelectionS
 	return fields
 }
 
-// 怕死循环了~
-var inputStructNameList = []string{}
-
-// var defaultGqlDefinitionNamedType = []string{"StringFilter", "StringNullableFilter", "DateTimeFilter", "BoolFilter"}
-// String  DateTime Boolean
+// graphql的标量
 var defaultGqlDefinitionNamedType = []string{"String", "DateTime", "Boolean", "Float", "Int", "enum"}
 
-func recursiveFindInputStructName(defname string, all map[string]*ast.Definition) {
+// 怕死循环了~
+func recursiveFindInputStructName(defname string, all map[string]*ast.Definition, ret *[]string) {
 	def, ok := all[defname]
 	if !ok {
 		fmt.Println(defname)
+		// return []string{}
 		return
 	}
+
 	for _, v2 := range def.Fields {
 		namedType := v2.Type.NamedType
 		if namedType == "" {
@@ -251,15 +204,19 @@ func recursiveFindInputStructName(defname string, all map[string]*ast.Definition
 		if in(namedType, defaultGqlDefinitionNamedType) {
 			continue
 		}
-		// 已经加进去的忽略
-		if in(namedType, inputStructNameList) {
+		// // 已经加进去的忽略
+		if in(namedType, *ret) {
 			continue
 		}
-		inputStructNameList = append(inputStructNameList, namedType)
+		// inputStructNameList = append(inputStructNameList, namedType)
+		*ret = append(*ret, namedType)
+
 		// 还要继续遍历（递归下）
-		recursiveFindInputStructName(namedType, all)
+		recursiveFindInputStructName(namedType, all, ret)
+		// result = append(result, lastResult...)
 		// res = append(res, childres...)
 	}
+	// return result
 }
 
 func in(target string, str_array []string) bool {
