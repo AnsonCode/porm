@@ -3,6 +3,7 @@ package engine
 import (
 	"bytes"
 	"encoding/json"
+	"regexp"
 	"strings"
 
 	"github.com/vektah/gqlparser/v2/ast"
@@ -40,26 +41,38 @@ func InlineQuery(str string, variable map[string]interface{}) (string, error) {
 
 	return InlineQueryDocument(query, variable)
 }
+
+// https://www.cnblogs.com/vicF/p/9517960.html
+// {"id":{"equals":"ssss"}}=>{id:{equals:"ssss"}}
+// ["id","id"]=>["id","id"]
+// TODO:修复不支持数组的bug
 func convert(s string) string {
-	var b bytes.Buffer
-	shouldSkip := true
+	reg := regexp.MustCompile("\"(\\w+)\"(\\s*:\\s*)")
+	res := reg.ReplaceAllString(s, "$1$2")
 
-	for i := 0; i < len(s); i++ {
-		c := string(s[i])
-		if c == `"` {
-			if i > 0 && string(s[i-1]) == `:` {
-				shouldSkip = false
-				b.WriteString(c)
-				continue
-			}
-			if shouldSkip {
-				continue
-			}
-			shouldSkip = true
-		}
-
-		b.WriteString(c)
-	}
-
-	return b.String()
+	return res
 }
+
+// func convert2(s string) string {
+// 	var b bytes.Buffer
+// 	shouldSkip := true
+
+// 	for i := 0; i < len(s); i++ {
+// 		c := string(s[i])
+// 		if c == `"` {
+// 			if i > 0 && string(s[i-1]) == `:` {
+// 				shouldSkip = false
+// 				b.WriteString(c)
+// 				continue
+// 			}
+// 			if shouldSkip {
+// 				continue
+// 			}
+// 			shouldSkip = true
+// 		}
+
+// 		b.WriteString(c)
+// 	}
+
+// 	return b.String()
+// }

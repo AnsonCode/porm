@@ -16,17 +16,6 @@
             ],
         },
         {
-            "name": "playground",
-            "type": "go",
-            "request": "launch",
-            "mode": "auto",
-            "program": "${workspaceFolder}/main.go",
-            "cwd": "${workspaceFolder}",
-            "args": [
-                "playground",
-            ],
-        },
-        {
             "name": "init",
             "type": "go",
             "request": "launch",

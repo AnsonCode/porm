@@ -203,7 +203,7 @@ func killExistingPrismaQueryEngineProcess(queryEnginePort int) {
 		command := fmt.Sprintf("(Get-NetTCPConnection -LocalPort %d).OwningProcess -Force", queryEnginePort)
 		execCmd(exec.Command("Stop-Process", "-Id", command))
 	} else {
-		command := fmt.Sprintf("lsof -i tcp:%s | grep LISTEN | awk '{print $2}' | xargs kill -9", queryEnginePort)
+		command := fmt.Sprintf("lsof -i tcp:%d | grep LISTEN | awk '{print $2}' | xargs kill -9", queryEnginePort)
 		execCmd(exec.Command("bash", "-c", command))
 	}
 }

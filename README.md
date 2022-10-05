@@ -29,6 +29,7 @@ bug fix
 
 - [x] 重复的变量定义~
 - [x] datatime支持
+- [ ] 修复不支持数组的bug
 
 # thx
 
