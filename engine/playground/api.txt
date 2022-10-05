@@ -2,12 +2,15 @@ package playground
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
 
+	"github.com/AnsonCode/porm/engine"
 	"github.com/wundergraph/graphql-go-tools/pkg/astparser"
 	"github.com/wundergraph/graphql-go-tools/pkg/asttransform"
 	"github.com/wundergraph/graphql-go-tools/pkg/introspection"
@@ -18,6 +21,7 @@ import (
 type Handler struct {
 	// enableSleepMode bool
 	// enablePlayground  bool
+	port              string
 	queryEngineURL    string
 	queryEngineSdlURL string
 	// sleepAfterSeconds int
@@ -29,11 +33,13 @@ type Handler struct {
 	// cancel func()
 }
 
-func NewHandler(queryEngineURL string) *Handler {
+func NewHandler(port string) *Handler {
+	queryEngineURL := fmt.Sprintf("http://localhost:%s/", port)
 	queryEngineSdlURL := queryEngineURL + "sdl"
 	return &Handler{
 		// enableSleepMode: enableSleepMode,
 		// enablePlayground:  !production,
+		port:              port,
 		queryEngineURL:    queryEngineURL,
 		queryEngineSdlURL: queryEngineSdlURL,
 		sleepCh:           make(chan struct{}),
@@ -137,22 +143,40 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) proxyRequestToEngine(body []byte, w http.ResponseWriter, r *http.Request) {
-	variables, _, _, _ := jsonparser.Get(body, "variables")
-	if variables == nil {
-		// if no variables are set, set an empty object
-		body, _ = jsonparser.Set(body, []byte("{}"), "variables")
-	}
+	req := engine.GQLRequest{}
+	json.Unmarshal(body, &req)
+	body, _ = jsonparser.Set(body, []byte("{}"), "variables")
+
+	qry, _ := engine.InlineQuery(string(req.Query), req.Variables) //这里要优化？
+
+	body, _ = jsonparser.Set(body, []byte(qry), "query")
+
 	operationName, _, _, _ := jsonparser.Get(body, "operationName")
 	if operationName == nil {
 		// if no operation name is set, set an empty string
 		body, _ = jsonparser.Set(body, []byte("null"), "operationName")
 	}
+
 	for i := 0; i < 3; i++ {
+		// var res interface{}
+		// // h.send2Prisma(context.TODO(), req.Query, req.Variables, &res)
+		// w.Header().Add("Content-Type", "application/json")
+		// data, _ := json.Marshal(res)
+
+		// _, err := w.Write(data)
+		// if err != nil {
+		// 	return
+		// }
 		if h.sendRequest(body, w, r) {
 			return
 		}
 	}
 	w.WriteHeader(http.StatusInternalServerError)
+}
+
+func (h *Handler) send2Prisma(ctx context.Context, query string, variables map[string]interface{}, v interface{}) error {
+
+	return engine.Do(ctx, h.port, query, variables, v)
 }
 
 func (h *Handler) sendRequest(body []byte, w http.ResponseWriter, r *http.Request) bool {

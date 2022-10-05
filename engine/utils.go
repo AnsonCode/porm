@@ -23,6 +23,7 @@ func InlineQueryDocument(query *ast.QueryDocument, variable map[string]interface
 	bufstr := buf.String()
 
 	for k, v := range variable {
+		// s, _ := json.MarshalIndent(v, "", "\t") // TODO:这里去掉引号
 		s, _ := json.Marshal(v) // TODO:这里去掉引号
 		ss := convert(string(s))
 		bufstr = strings.ReplaceAll(bufstr, "$"+k, ss)

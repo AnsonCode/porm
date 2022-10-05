@@ -39,7 +39,7 @@ type QueryEngine struct {
 	port string
 
 	// url holds the query-engine url
-	url string
+	// url string
 
 	// Schema contains the prisma Schema
 	Schema string
@@ -120,9 +120,8 @@ func (e *QueryEngine) spawn(file string) error {
 
 	fmt.Printf("running query-engine on port %s", e.port)
 
-	e.url = "http://localhost:" + e.port
-
-	e.cmd = exec.Command(file, "-p", e.port, "--enable-raw-queries")
+	e.cmd = exec.Command(file, "-p", e.port, "--enable-raw-queries", "--enable-playground")
+	// args = append(args, "--enable-playground", "--port", queryEnginePort)
 
 	e.cmd.Stdout = os.Stdout
 	e.cmd.Stderr = os.Stderr

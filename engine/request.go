@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -17,6 +18,17 @@ import (
 var ErrNotFound = errors.New("ErrNotFound")
 var internalUpdateNotFoundMessage = "Error occurred during query execution: InterpretationError(\"Error for binding '0'\", Some(QueryGraphBuilderError(RecordNotFound(\"Record to update not found.\"))))"
 var internalDeleteNotFoundMessage = "Error occurred during query execution: InterpretationError(\"Error for binding '0'\", Some(QueryGraphBuilderError(RecordNotFound(\"Record to delete does not exist.\"))))"
+
+func Do(ctx context.Context, port, query string, variables map[string]interface{}, v interface{}) error {
+	// fmt.Println(vars, qry)
+	engine := &QueryEngine{
+		port: port,
+		// hasBinaryTargets: hasBinaryTargets,
+		http: &http.Client{},
+	}
+
+	return engine.Do(ctx, query, variables, v)
+}
 
 func (e *QueryEngine) Do(ctx context.Context, query string, variables map[string]interface{}, v interface{}) error {
 	// fmt.Println(vars, qry)
@@ -41,7 +53,7 @@ func (e *QueryEngine) do(ctx context.Context, payload interface{}, v interface{}
 		return fmt.Errorf("request failed: %w", err)
 	}
 
-	fmt.Printf("[timing] query engine request took %s", time.Since(startReq))
+	fmt.Printf("[timing] query engine request took %s\n", time.Since(startReq))
 
 	startParse := time.Now()
 
@@ -56,14 +68,14 @@ func (e *QueryEngine) do(ctx context.Context, payload interface{}, v interface{}
 			first.RawMessage() == internalDeleteNotFoundMessage {
 			return ErrNotFound
 		}
-		return fmt.Errorf("pql error: %s", first.RawMessage())
+		return fmt.Errorf("pql error: %s ", first.RawMessage())
 	}
 
 	if err := json.Unmarshal(response.Data, v); err != nil {
 		return fmt.Errorf("json unmarshal: %w", err)
 	}
 
-	fmt.Printf("[timing] request unmarshaling took %s", time.Since(startParse))
+	fmt.Printf("[timing] request unmarshaling took %s\n", time.Since(startParse))
 
 	return nil
 }
@@ -97,8 +109,9 @@ func (e *QueryEngine) Request(ctx context.Context, method string, path string, p
 	// if logger.Enabled {
 	// }
 	fmt.Printf("prisma engine payload: `%s`", requestBody)
+	url := "http://localhost:" + e.port
 
-	return request(ctx, e.http, method, e.url+path, requestBody, func(req *http.Request) {
+	return request(ctx, e.http, method, url+path, requestBody, func(req *http.Request) {
 		req.Header.Set("content-type", "application/json")
 	})
 }
@@ -198,4 +211,21 @@ func request(ctx context.Context, client *http.Client, method string, url string
 	// }
 
 	return responseBody, nil
+}
+
+func (e *QueryEngine) StartPlayground() {
+	handler := NewHandler(e.port)
+	pgPort := 8124
+	srv := http.Server{
+		Addr:    fmt.Sprintf(":%d", pgPort),
+		Handler: handler,
+	}
+	go func() {
+		err := srv.ListenAndServe()
+		if err != nil && err != http.ErrServerClosed {
+			// log.Fatalln("listen and serve", err)
+			log.Panic("listen and serve", err)
+		}
+	}()
+	fmt.Printf("playground，访问：http://localhost:%d\n", pgPort)
 }

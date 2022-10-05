@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/signal"
@@ -31,6 +32,7 @@ func main() {
 	engine := engine.NewQueryEngine(GLOBAL_SCHEME, "8123", "./query-engine")
 	engine.Connect()
 	defer engine.Disconnect()
+	engine.StartPlayground()
 
 	query := tutorial.NewClient(engine)
 
@@ -43,8 +45,8 @@ func main() {
 	}
 	ctx := context.TODO()
 	res, err2 := query.Test3(ctx, whe, 3)
-
-	fmt.Println(res, err2)
+	data, _ := json.MarshalIndent(res, "", "\t")
+	fmt.Println(string(data), err2)
 	sig := make(chan os.Signal, 2)
 	signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT)
 	<-sig

@@ -4,13 +4,10 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
-	"net/http"
 	"os"
 	"path/filepath"
 
 	"github.com/AnsonCode/porm/config"
-	"github.com/AnsonCode/porm/playground"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -28,7 +25,7 @@ func Do(args []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) int 
 	rootCmd.AddCommand(genCmd)
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(installCmd)
-	rootCmd.AddCommand(playgroundCmd)
+	// rootCmd.AddCommand(playgroundCmd)
 
 	rootCmd.AddCommand(versionCmd)
 	// rootCmd.AddCommand(uploadCmd)
@@ -201,20 +198,11 @@ var checkCmd = &cobra.Command{
 	},
 }
 
-var playgroundCmd = &cobra.Command{
-	Use:   "playground",
-	Short: "Start prisma  query engine playground",
-	Run: func(cmd *cobra.Command, args []string) {
-		// TODO：
-		baseUrl := fmt.Sprintf("http://localhost:%s/", "8123")
-		handler := playground.NewHandler(baseUrl)
-		srv := http.Server{
-			Addr:    ":8124",
-			Handler: handler,
-		}
-		err := srv.ListenAndServe()
-		if err != nil && err != http.ErrServerClosed {
-			log.Fatalln("listen and serve", err)
-		}
-	},
-}
+// var playgroundCmd = &cobra.Command{
+// 	Use:   "playground",
+// 	Short: "Start prisma  query engine playground",
+// 	Run: func(cmd *cobra.Command, args []string) {
+// 		// TODO：
+
+// 	},
+// }
