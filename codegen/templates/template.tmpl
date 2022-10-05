@@ -5,7 +5,10 @@
 
 package {{.Package}}
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 
 type DateTime time.Time
@@ -30,6 +33,10 @@ func (t DateTime) MarshalJSON() ([]byte, error) {
 
 func (t DateTime) String() string {
 	return time.Time(t).Format(timeFormart)
+}
+
+type Json struct {
+	json.RawMessage
 }
 
 {{template "modelsCode" . }}

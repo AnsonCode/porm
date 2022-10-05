@@ -1,0 +1,3 @@
+mutation RawSql {
+  queryRaw(query: "SELECT * FROM Post WHERE id= ?", parameters: "[1]")
+}

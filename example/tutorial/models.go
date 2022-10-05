@@ -4,7 +4,10 @@
 
 package tutorial
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 type DateTime time.Time
 
@@ -28,6 +31,10 @@ func (t DateTime) MarshalJSON() ([]byte, error) {
 
 func (t DateTime) String() string {
 	return time.Time(t).Format(timeFormart)
+}
+
+type Json struct {
+	json.RawMessage
 }
 
 // 枚举定义开始
@@ -199,6 +206,12 @@ type PostWhereInput struct {
 	UserId *StringFilter `json:"userId,omitempty"`
 }
 
+// res2_struct
+type RawSqlResponse struct {
+	// -
+	QueryRaw *Json `json:"queryRaw"`
+}
+
 // OBJECT_Mutation_PART
 type ReateCreateOnePost struct {
 	// -
@@ -319,32 +332,6 @@ type Test3Response struct {
 	FindManyPost []*Test3FindManyPost `json:"findManyPost"`
 }
 
-// OBJECT_Post_PART
-type Test4Author struct {
-	// -
-	Desc *string `json:"desc"`
-	// -
-	ID string `json:"id"`
-}
-
-// OBJECT_Query_PART
-type Test4FindManyPost struct {
-	// -
-	ID string `json:"id"`
-	// -
-	UpdatedAt *DateTime `json:"updatedAt"`
-	// -
-	Title string `json:"title"`
-	// -
-	Author *Test4Author `json:"author"`
-}
-
-// res2_struct
-type Test4Response struct {
-	// -
-	FindManyPost []*Test4FindManyPost `json:"findManyPost"`
-}
-
 // OBJECT_Query_PART
 type TestFindUniquePost struct {
 	// -
@@ -371,6 +358,12 @@ type TestResponse struct {
 type TestTimeAuthor struct {
 	// -
 	ID string `json:"id"`
+	// -
+	Name string `json:"name"`
+	// -
+	CreatedAt *DateTime `json:"createdAt"`
+	// -
+	Sex *Sex `json:"sex"`
 }
 
 // OBJECT_Query_PART

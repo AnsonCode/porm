@@ -53,9 +53,13 @@ func main() {
 	res, err2 := query.Test3(ctx, whe, 3)
 	data, _ := json.MarshalIndent(res, "", "\t")
 	fmt.Println(string(data), err2)
-
-	restime, err3 := query.TestTime(ctx, 2)
+	sex := tutorial.SexMALE
+	restime, err3 := query.TestTime(ctx, 2, []string{"dd"}, &sex)
 	data, _ = json.MarshalIndent(restime, "", "\t")
+	fmt.Println(string(data), err3)
+
+	resraw, err3 := query.RawSql(ctx)
+	data, _ = json.MarshalIndent(resraw, "", "\t")
 	fmt.Println(string(data), err3)
 
 	sig := make(chan os.Signal, 2)

@@ -45,7 +45,6 @@ func InlineQuery(str string, variable map[string]interface{}) (string, error) {
 // https://www.cnblogs.com/vicF/p/9517960.html
 // {"id":{"equals":"ssss"}}=>{id:{equals:"ssss"}}
 // ["id","id"]=>["id","id"]
-// TODO:修复不支持数组的bug
 func convert(s string) string {
 	reg := regexp.MustCompile("\"(\\w+)\"(\\s*:\\s*)")
 	res := reg.ReplaceAllString(s, "$1$2")

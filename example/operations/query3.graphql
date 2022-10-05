@@ -1,10 +1,16 @@
-query TestTime($take: Int!) {
-  findManyPost(take: $take) {
+query TestTime($take: Int!, $idnot: [String]!, $sex: Sex!) {
+  findManyPost(
+    take: $take
+    where: { id: { notIn: $idnot }, author: { is: { sex: { equals: $sex } } } }
+  ) {
     id
     title
     createdAt
     author {
       id
+      name
+      createdAt
+      sex
     }
   }
 }
