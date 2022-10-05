@@ -37,8 +37,8 @@ func (t Queries) Reate(ctx context.Context, title string, published bool, userId
 		"userId": userId, //string
 
 	}
-	qry, _ := InlineQuery(reate, input) //这里要优化？
-	err = Do(ctx, t.e, qry, &res)
+	err = t.client.Do(ctx, reate, input, &res)
+
 	if err != nil {
 		fmt.Println(err)
 	}

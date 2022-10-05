@@ -6,159 +6,21 @@ package {{.Package}}
 
 import (
 	"context"
-
-	"fmt"
-	"os"
-	"time"
-
-	"bytes"
-	"encoding/json"
-	"strings"
-
-	"github.com/prisma/prisma-client-go/engine"
-	"github.com/prisma/prisma-client-go/runtime/types"
-	"github.com/vektah/gqlparser/v2/ast"
-	"github.com/vektah/gqlparser/v2/formatter"
-	"github.com/vektah/gqlparser/v2/gqlerror"
-	"github.com/vektah/gqlparser/v2/parser"
 )
 
-func InlineQueryDocument(query *ast.QueryDocument, variable map[string]interface{}) (string, error) {
-	// 这里要循环处理，去除变量输入
-	for _, operation := range query.Operations {
-		operation.VariableDefinitions = ast.VariableDefinitionList{}
-	}
-
-	var buf bytes.Buffer
-	formatter.NewFormatter(&buf).FormatQueryDocument(query)
-
-	bufstr := buf.String()
-
-	for k, v := range variable {
-		s, _ := json.Marshal(v) // TODO:这里去掉引号
-		ss := convert(string(s))
-		bufstr = strings.ReplaceAll(bufstr, "$"+k, ss)
-	}
-	return bufstr, nil
+type GraphqlClientInterface interface {
+	Do(ctx context.Context, query string, variables map[string]interface{}, v interface{}) error
+	//  Sdl(ctx context.Context) error
 }
 
-func InlineQuery(str string, variable map[string]interface{}) (string, error) {
-	query, err := parser.ParseQuery(&ast.Source{Input: str})
-	if err != nil {
-		gqlErr := err.(*gqlerror.Error)
-		return "", gqlerror.List{gqlErr}
-	}
-
-	return InlineQueryDocument(query, variable)
-}
-func convert(s string) string {
-	var b bytes.Buffer
-	shouldSkip := true
-
-	for i := 0; i < len(s); i++ {
-		c := string(s[i])
-		if c == `"` {
-			if i > 0 && string(s[i-1]) == `:` {
-				shouldSkip = false
-				b.WriteString(c)
-				continue
-			}
-			if shouldSkip {
-				continue
-			}
-			shouldSkip = true
-		}
-
-		b.WriteString(c)
-	}
-
-	return b.String()
-}
-
-func NewClient(path string) *Queries {
-	connectionStr := mustReadFile(path)
-	e := engine.NewQueryEngine(connectionStr, false)
+func NewClient(client GraphqlClientInterface) *Queries {
 	return &Queries{
-		e,
-	}
-}
-func NewClient2(connectionStr string) *Queries {
-	e := engine.NewQueryEngine(connectionStr, false)
-	return &Queries{
-		e,
+		// e,
+		client,
 	}
 }
 
 type Queries struct {
-	e *engine.QueryEngine
-}
-
-func (q *Queries) Connect() {
-	if err := q.e.Connect(); err != nil {
-		panic(err)
-	}
-}
-
-func (q *Queries) Disconnect() {
-	if q.e != nil {
-		q.e.Disconnect()
-	}
-}
-
-// Do sends the http Request to the query engine and unmarshals the response
-func Do(ctx context.Context, e *engine.QueryEngine, qry string, v interface{}) error {
-
-	// fmt.Println(vars, qry)
-	payload := engine.GQLRequest{
-		Query:     qry,
-		Variables: map[string]interface{}{},
-	}
-	startReq := time.Now()
-
-	body, err := e.Request(ctx, "POST", "/", payload)
-	if err != nil {
-		return fmt.Errorf("request failed: %w", err)
-	}
-
-	fmt.Printf("[timing] query engine request took %s", time.Since(startReq))
-
-	startParse := time.Now()
-	type GQLResponse struct {
-		Data       json.RawMessage        `json:"data"`
-		Errors     []engine.GQLError      `json:"errors"`
-		Extensions map[string]interface{} `json:"extensions"`
-	}
-	var response GQLResponse
-	if err := json.Unmarshal(body, &response); err != nil {
-		return fmt.Errorf("json unmarshal: %w", err)
-	}
-
-	if len(response.Errors) > 0 {
-		first := response.Errors[0]
-		var internalUpdateNotFoundMessage = "Error occurred during query execution: InterpretationError(\"Error for binding '0'\", Some(QueryGraphBuilderError(RecordNotFound(\"Record to update not found.\"))))"
-		var internalDeleteNotFoundMessage = "Error occurred during query execution: InterpretationError(\"Error for binding '0'\", Some(QueryGraphBuilderError(RecordNotFound(\"Record to delete does not exist.\"))))"
-
-		if first.RawMessage() == internalUpdateNotFoundMessage ||
-			first.RawMessage() == internalDeleteNotFoundMessage {
-			return types.ErrNotFound
-		}
-		return fmt.Errorf("pql error: %s", first.RawMessage())
-	}
-
-	if err := json.Unmarshal(response.Data, v); err != nil {
-		return fmt.Errorf("json unmarshal: %w", err)
-	}
-
-	fmt.Printf("[timing] request unmarshaling took %s", time.Since(startParse))
-
-	return nil
-}
-
-func mustReadFile(name string) string {
-	src, err := os.ReadFile(name)
-	if err != nil {
-		panic(err)
-	}
-
-	return string(src)
+	// e *engine.QueryEngine
+	client GraphqlClientInterface
 }

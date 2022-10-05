@@ -39,8 +39,8 @@ func (t Queries) Test2(ctx context.Context, whe *PostWhereInput, tak int32) (res
 		"tak": tak, //int32
 
 	}
-	qry, _ := InlineQuery(test2, input) //这里要优化？
-	err = Do(ctx, t.e, qry, &res)
+	err = t.client.Do(ctx, test2, input, &res)
+
 	if err != nil {
 		fmt.Println(err)
 	}

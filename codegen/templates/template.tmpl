@@ -86,8 +86,8 @@ import (
 			"{{.Name}}": {{.Name}},//{{.Typ}}
 			{{ end }}
 		}
-		qry, _ := InlineQuery({{.ConstantName}}, input) //这里要优化？
-		err = Do(ctx, t.e, qry, &res)
+		err=t.client.Do(ctx,{{.ConstantName}},input,&res)
+
 		if err != nil {
 			fmt.Println(err)
 		}

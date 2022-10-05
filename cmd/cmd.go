@@ -4,8 +4,13 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
+	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/AnsonCode/porm/config"
+	"github.com/AnsonCode/porm/playground"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -22,6 +27,9 @@ func Do(args []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) int 
 	rootCmd.AddCommand(checkCmd)
 	rootCmd.AddCommand(genCmd)
 	rootCmd.AddCommand(initCmd)
+	rootCmd.AddCommand(installCmd)
+	rootCmd.AddCommand(playgroundCmd)
+
 	rootCmd.AddCommand(versionCmd)
 	// rootCmd.AddCommand(uploadCmd)
 
@@ -74,9 +82,27 @@ var initCmd = &cobra.Command{
 			}
 		}
 		if _, err := os.Stat(file); !os.IsNotExist(err) {
+			fmt.Printf("file (%s) is exist", file)
 			return nil
+
 		}
-		blob, err := yaml.Marshal(V1GenerateSettings{Version: "1.0"})
+		defaultConf := config.Config{
+			Version: "1.0",
+			SQL: []config.SQL{
+				{
+					Schema:  []string{"todo"},
+					Queries: []string{"todo"},
+					Gen: config.SQLGen{
+						Go: &config.SQLGo{
+							Package: "demo",
+							Out:     "demo",
+						},
+					},
+				},
+			},
+		}
+
+		blob, err := yaml.Marshal(defaultConf)
 		if err != nil {
 			return err
 		}
@@ -84,12 +110,12 @@ var initCmd = &cobra.Command{
 	},
 }
 
-type V1GenerateSettings struct {
-	Version string `json:"version" yaml:"version"`
-	// Project   Project             `json:"project" yaml:"project"`
-	// Packages  []v1PackageSettings `json:"packages" yaml:"packages"`
-	// Overrides []Override          `json:"overrides,omitempty" yaml:"overrides,omitempty"`
-	Rename map[string]string `json:"rename,omitempty" yaml:"rename,omitempty"`
+var installCmd = &cobra.Command{
+	Use:   "install",
+	Short: "Install the prisma  query engine",
+	Run: func(cmd *cobra.Command, args []string) {
+		// TODO：
+	},
 }
 
 type Env struct {
@@ -131,7 +157,7 @@ func getConfigPath(stderr io.Writer, f *pflag.Flag) (string, string) {
 
 var genCmd = &cobra.Command{
 	Use:   "generate",
-	Short: "Generate Go code from Graphql",
+	Short: "Generate Go code from GraphQL",
 	Run: func(cmd *cobra.Command, args []string) {
 
 		stderr := cmd.ErrOrStderr()
@@ -163,7 +189,7 @@ var genCmd = &cobra.Command{
 
 var checkCmd = &cobra.Command{
 	Use:   "compile",
-	Short: "Statically check SQL for syntax and type errors",
+	Short: "Statically check GraphQL for syntax and type errors",
 	RunE: func(cmd *cobra.Command, args []string) error {
 
 		stderr := cmd.ErrOrStderr()
@@ -172,5 +198,23 @@ var checkCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		return nil
+	},
+}
+
+var playgroundCmd = &cobra.Command{
+	Use:   "playground",
+	Short: "Start prisma  query engine playground",
+	Run: func(cmd *cobra.Command, args []string) {
+		// TODO：
+		baseUrl := fmt.Sprintf("http://localhost:%s/", "8123")
+		handler := playground.NewHandler(baseUrl)
+		srv := http.Server{
+			Addr:    ":8124",
+			Handler: handler,
+		}
+		err := srv.ListenAndServe()
+		if err != nil && err != http.ErrServerClosed {
+			log.Fatalln("listen and serve", err)
+		}
 	},
 }

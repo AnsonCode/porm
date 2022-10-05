@@ -34,8 +34,8 @@ func (t Queries) Test4(ctx context.Context, tak int32) (res *Test4Response, err 
 		"tak": tak, //int32
 
 	}
-	qry, _ := InlineQuery(test4, input) //这里要优化？
-	err = Do(ctx, t.e, qry, &res)
+	err = t.client.Do(ctx, test4, input, &res)
+
 	if err != nil {
 		fmt.Println(err)
 	}

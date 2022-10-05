@@ -33,8 +33,8 @@ func (t Queries) Test5(ctx context.Context, tak int32) (res *Test5Response, err 
 		"tak": tak, //int32
 
 	}
-	qry, _ := InlineQuery(test5, input) //这里要优化？
-	err = Do(ctx, t.e, qry, &res)
+	err = t.client.Do(ctx, test5, input, &res)
+
 	if err != nil {
 		fmt.Println(err)
 	}

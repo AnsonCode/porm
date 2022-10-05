@@ -14,12 +14,12 @@ func v2ParseConfig(rd io.Reader) (Config, error) {
 	if err := dec.Decode(&conf); err != nil {
 		return conf, err
 	}
-	if conf.Version == "" {
-		return conf, ErrMissingVersion
-	}
-	if conf.Version != "2" {
-		return conf, ErrUnknownVersion
-	}
+	// if conf.Version == "" {
+	// 	return conf, ErrMissingVersion
+	// }
+	// if conf.Version != "2" {
+	// 	return conf, ErrUnknownVersion
+	// }
 	if len(conf.SQL) == 0 {
 		return conf, ErrNoPackages
 	}
