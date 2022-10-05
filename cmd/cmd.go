@@ -163,6 +163,7 @@ var genCmd = &cobra.Command{
 		if err != nil {
 			os.Exit(1)
 		}
+		// TODO:生成前先删除一拨
 		for filename, source := range output {
 			os.MkdirAll(filepath.Dir(filename), 0755)
 			if err := os.WriteFile(filename, []byte(source), 0644); err != nil {

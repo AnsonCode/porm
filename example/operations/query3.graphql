@@ -1,11 +1,9 @@
-# Write your query or mutation here
-
-query Test5($tak: Int!) {
-  findManyPost(take: $tak, skip: 0) {
+query TestTime($take: Int!) {
+  findManyPost(take: $take) {
     id
     title
+    createdAt
     author {
-      desc
       id
     }
   }

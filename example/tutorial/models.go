@@ -8,6 +8,28 @@ import "time"
 
 type DateTime time.Time
 
+const (
+	timeFormart = "2006-01-02T15:04:05.000Z"
+)
+
+func (t *DateTime) UnmarshalJSON(data []byte) (err error) {
+	now, err := time.ParseInLocation(`"`+timeFormart+`"`, string(data), time.Local)
+	*t = DateTime(now)
+	return
+}
+
+func (t DateTime) MarshalJSON() ([]byte, error) {
+	b := make([]byte, 0, len(timeFormart)+2)
+	b = append(b, '"')
+	b = time.Time(t).AppendFormat(b, timeFormart)
+	b = append(b, '"')
+	return b, nil
+}
+
+func (t DateTime) String() string {
+	return time.Time(t).Format(timeFormart)
+}
+
 // 枚举定义开始
 
 // enum
@@ -323,30 +345,6 @@ type Test4Response struct {
 	FindManyPost []*Test4FindManyPost `json:"findManyPost"`
 }
 
-// OBJECT_Post_PART
-type Test5Author struct {
-	// -
-	Desc *string `json:"desc"`
-	// -
-	ID string `json:"id"`
-}
-
-// OBJECT_Query_PART
-type Test5FindManyPost struct {
-	// -
-	ID string `json:"id"`
-	// -
-	Title string `json:"title"`
-	// -
-	Author *Test5Author `json:"author"`
-}
-
-// res2_struct
-type Test5Response struct {
-	// -
-	FindManyPost []*Test5FindManyPost `json:"findManyPost"`
-}
-
 // OBJECT_Query_PART
 type TestFindUniquePost struct {
 	// -
@@ -367,6 +365,30 @@ type TestFindUniquePost struct {
 type TestResponse struct {
 	// -
 	FindUniquePost *TestFindUniquePost `json:"result"`
+}
+
+// OBJECT_Post_PART
+type TestTimeAuthor struct {
+	// -
+	ID string `json:"id"`
+}
+
+// OBJECT_Query_PART
+type TestTimeFindManyPost struct {
+	// -
+	ID string `json:"id"`
+	// -
+	Title string `json:"title"`
+	// -
+	CreatedAt *DateTime `json:"createdAt"`
+	// -
+	Author *TestTimeAuthor `json:"author"`
+}
+
+// res2_struct
+type TestTimeResponse struct {
+	// -
+	FindManyPost []*TestTimeFindManyPost `json:"findManyPost"`
 }
 
 // INPUT_OBJECT

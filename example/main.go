@@ -12,11 +12,6 @@ import (
 	"github.com/AnsonCode/porm/example/tutorial"
 )
 
-var GLOBAL_SCHEME string
-
-func init() {
-	GLOBAL_SCHEME = mustReadFile("./schema.prisma")
-}
 func mustReadFile(name string) string {
 	src, err := os.ReadFile(name)
 	if err != nil {
@@ -27,13 +22,25 @@ func mustReadFile(name string) string {
 }
 
 func main() {
-	// _, schema := testSdl()
+	ctx := context.TODO()
 
-	engine := engine.NewQueryEngine(GLOBAL_SCHEME, "8123", "./query-engine")
+	// _, schema := testSdl()
+	GLOBAL_SCHEME := mustReadFile("./schema.prisma")
+	engine := engine.NewQueryEngine(GLOBAL_SCHEME, 8123, "./query-engine")
 	engine.Connect()
 	defer engine.Disconnect()
 	engine.StartPlayground()
 
+	// 内省获取 graphql schema
+	sdl, err := engine.IntrospectSDL(ctx)
+	if err != nil {
+		panic(err)
+	}
+	if err := os.WriteFile("schema2.graphql", sdl, 0666); err != nil {
+		panic(err)
+	}
+
+	// TODO:生成schema.graphql的方式，以便用户好读取
 	query := tutorial.NewClient(engine)
 
 	id := "1"
@@ -43,10 +50,14 @@ func main() {
 			// Gt:     "ss",
 		},
 	}
-	ctx := context.TODO()
 	res, err2 := query.Test3(ctx, whe, 3)
 	data, _ := json.MarshalIndent(res, "", "\t")
 	fmt.Println(string(data), err2)
+
+	restime, err3 := query.TestTime(ctx, 2)
+	data, _ = json.MarshalIndent(restime, "", "\t")
+	fmt.Println(string(data), err3)
+
 	sig := make(chan os.Signal, 2)
 	signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT)
 	<-sig

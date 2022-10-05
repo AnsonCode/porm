@@ -9,13 +9,14 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strconv"
 	"syscall"
 	"time"
 
 	"github.com/joho/godotenv"
 )
 
-func NewQueryEngine(schema, port, enginePath string) *QueryEngine {
+func NewQueryEngine(schema string, port int, enginePath string) *QueryEngine {
 	killExistingPrismaQueryEngineProcess(port)
 
 	return &QueryEngine{
@@ -36,7 +37,7 @@ type QueryEngine struct {
 	// http is the internal http client
 	http *http.Client
 
-	port string
+	port int
 
 	// url holds the query-engine url
 	// url string
@@ -118,9 +119,10 @@ func (e *QueryEngine) ensure() (string, error) {
 
 func (e *QueryEngine) spawn(file string) error {
 
-	fmt.Printf("running query-engine on port %s", e.port)
+	port := strconv.Itoa(e.port)
 
-	e.cmd = exec.Command(file, "-p", e.port, "--enable-raw-queries", "--enable-playground")
+	fmt.Printf("running query-engine on port %s", port)
+	e.cmd = exec.Command(file, "-p", port, "--enable-raw-queries", "--enable-playground")
 	// args = append(args, "--enable-playground", "--port", queryEnginePort)
 
 	e.cmd.Stdout = os.Stdout
@@ -196,9 +198,9 @@ func (e *QueryEngine) Kill() error {
 }
 
 // reference:https://github.com/wundergraph/wundergraph
-func killExistingPrismaQueryEngineProcess(queryEnginePort string) {
+func killExistingPrismaQueryEngineProcess(queryEnginePort int) {
 	if runtime.GOOS == "windows" {
-		command := fmt.Sprintf("(Get-NetTCPConnection -LocalPort %s).OwningProcess -Force", queryEnginePort)
+		command := fmt.Sprintf("(Get-NetTCPConnection -LocalPort %d).OwningProcess -Force", queryEnginePort)
 		execCmd(exec.Command("Stop-Process", "-Id", command))
 	} else {
 		command := fmt.Sprintf("lsof -i tcp:%s | grep LISTEN | awk '{print $2}' | xargs kill -9", queryEnginePort)

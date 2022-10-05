@@ -19,7 +19,7 @@ import (
 type Handler struct {
 	// enableSleepMode bool
 	// enablePlayground  bool
-	port              string
+	port              int
 	queryEngineURL    string
 	queryEngineSdlURL string
 	// sleepAfterSeconds int
@@ -31,8 +31,8 @@ type Handler struct {
 	// cancel func()
 }
 
-func NewHandler(port string) *Handler {
-	queryEngineURL := fmt.Sprintf("http://localhost:%s/", port)
+func NewHandler(port int) *Handler {
+	queryEngineURL := fmt.Sprintf("http://localhost:%d/", port)
 	queryEngineSdlURL := queryEngineURL + "sdl"
 	return &Handler{
 		// enableSleepMode: enableSleepMode,
@@ -164,7 +164,7 @@ func (h *Handler) proxyRequestToEngine(body []byte, w http.ResponseWriter, r *ht
 		err := h.send2Prisma(r.Context(), qry, req.Variables, &v)
 		if err == nil {
 			w.Header().Add("Content-Type", "application/json")
-			_, err = w.Write(v)
+			w.Write(v)
 			// fmt.Print(err)
 			return
 		}
@@ -178,41 +178,42 @@ func (h *Handler) send2Prisma(ctx context.Context, query string, variables map[s
 	return Do(ctx, h.port, query, variables, v)
 }
 
-func (h *Handler) sendRequest(body []byte, w http.ResponseWriter, r *http.Request) bool {
+// TODO:暂时没用
+// func (h *Handler) sendRequest(body []byte, w http.ResponseWriter, r *http.Request) bool {
 
-	// if bytes.Contains(body, []byte("mutation")) {
-	// 	h.writeLimit.Take()
-	// }
-	// h.readLimit.Take()
+// 	// if bytes.Contains(body, []byte("mutation")) {
+// 	// 	h.writeLimit.Take()
+// 	// }
+// 	// h.readLimit.Take()
 
-	newRequest, err := http.NewRequestWithContext(r.Context(), r.Method, h.queryEngineURL, ioutil.NopCloser(bytes.NewBuffer(body)))
-	if err != nil {
-		log.Println(err)
-		return false
-	}
-	// set the content type to application/json
-	newRequest.Header.Set("content-type", "application/json")
-	resp, err := h.client.Do(newRequest)
-	if err != nil || resp.StatusCode != http.StatusOK {
-		return false
-	}
-	defer resp.Body.Close()
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Println(err)
-		return false
-	}
-	if bytes.HasPrefix(data, []byte("{\"e")) && bytes.Contains(data, []byte("Timed out")) {
-		return false
-	}
-	w.Header().Add("Content-Type", "application/json")
-	_, err = w.Write(data)
-	if err != nil {
-		log.Println(err)
-		return false
-	}
-	return true
-}
+// 	newRequest, err := http.NewRequestWithContext(r.Context(), r.Method, h.queryEngineURL, ioutil.NopCloser(bytes.NewBuffer(body)))
+// 	if err != nil {
+// 		log.Println(err)
+// 		return false
+// 	}
+// 	// set the content type to application/json
+// 	newRequest.Header.Set("content-type", "application/json")
+// 	resp, err := h.client.Do(newRequest)
+// 	if err != nil || resp.StatusCode != http.StatusOK {
+// 		return false
+// 	}
+// 	defer resp.Body.Close()
+// 	data, err := ioutil.ReadAll(resp.Body)
+// 	if err != nil {
+// 		log.Println(err)
+// 		return false
+// 	}
+// 	if bytes.HasPrefix(data, []byte("{\"e")) && bytes.Contains(data, []byte("Timed out")) {
+// 		return false
+// 	}
+// 	w.Header().Add("Content-Type", "application/json")
+// 	_, err = w.Write(data)
+// 	if err != nil {
+// 		log.Println(err)
+// 		return false
+// 	}
+// 	return true
+// }
 
 // func (h *Handler) runSleepMode() {
 // 	timer := time.NewTimer(time.Duration(h.sleepAfterSeconds) * time.Second)

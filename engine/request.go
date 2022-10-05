@@ -19,7 +19,7 @@ var ErrNotFound = errors.New("ErrNotFound")
 var internalUpdateNotFoundMessage = "Error occurred during query execution: InterpretationError(\"Error for binding '0'\", Some(QueryGraphBuilderError(RecordNotFound(\"Record to update not found.\"))))"
 var internalDeleteNotFoundMessage = "Error occurred during query execution: InterpretationError(\"Error for binding '0'\", Some(QueryGraphBuilderError(RecordNotFound(\"Record to delete does not exist.\"))))"
 
-func Do(ctx context.Context, port, query string, variables map[string]interface{}, v interface{}) error {
+func Do(ctx context.Context, port int, query string, variables map[string]interface{}, v interface{}) error {
 	// fmt.Println(vars, qry)
 	engine := &QueryEngine{
 		port: port,
@@ -109,7 +109,7 @@ func (e *QueryEngine) Request(ctx context.Context, method string, path string, p
 	// if logger.Enabled {
 	// }
 	fmt.Printf("prisma engine payload: `%s`", requestBody)
-	url := "http://localhost:" + e.port
+	url := fmt.Sprintf("http://localhost:%d", e.port)
 
 	return request(ctx, e.http, method, url+path, requestBody, func(req *http.Request) {
 		req.Header.Set("content-type", "application/json")
