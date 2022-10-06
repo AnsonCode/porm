@@ -207,7 +207,7 @@ type PostWhereInput struct {
 }
 
 // res2_struct
-type RawSqlResponse struct {
+type QueryRaw2Response struct {
 	// -
 	QueryRaw *Json `json:"queryRaw"`
 }
@@ -330,28 +330,6 @@ type Test3FindManyPost struct {
 type Test3Response struct {
 	// -
 	FindManyPost []*Test3FindManyPost `json:"findManyPost"`
-}
-
-// OBJECT_Query_PART
-type TestFindUniquePost struct {
-	// -
-	ID string `json:"id"`
-	// -
-	CreatedAt *DateTime `json:"createdAt"`
-	// -
-	UpdatedAt *DateTime `json:"updatedAt"`
-	// -
-	Title string `json:"title"`
-	// -
-	Published bool `json:"published"`
-	// -
-	Desc *string `json:"desc"`
-}
-
-// res2_struct
-type TestResponse struct {
-	// -
-	FindUniquePost *TestFindUniquePost `json:"result"`
 }
 
 // OBJECT_Post_PART

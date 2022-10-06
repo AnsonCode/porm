@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"github.com/AnsonCode/porm/engine"
+	"github.com/AnsonCode/porm/example/custom"
 	"github.com/AnsonCode/porm/example/tutorial"
 )
 
@@ -58,8 +59,14 @@ func main() {
 	data, _ = json.MarshalIndent(restime, "", "\t")
 	fmt.Println(string(data), err3)
 
-	resraw, err3 := query.RawSql(ctx)
+	// []byte
+	resraw, err3 := query.QueryRaw2(ctx, &tutorial.Json{RawMessage: []byte(`"[1,2]"`)})
 	data, _ = json.MarshalIndent(resraw, "", "\t")
+	fmt.Println(string(data), err3)
+
+	customquery := custom.NewClient(engine)
+	resraw2, err3 := customquery.CusGet(ctx)
+	data, _ = json.MarshalIndent(resraw2, "", "\t")
 	fmt.Println(string(data), err3)
 
 	sig := make(chan os.Signal, 2)

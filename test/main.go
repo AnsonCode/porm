@@ -33,6 +33,9 @@ func main() {
 	}
 
 	fmt.Print(string(ts.QueryRaw.RawMessage))
+
+	// sql := "SELECT * FROM Post WHERE id= {{.id}}"
+
 	// switch ts.Type {
 	// case 1:
 	// 	var p Person

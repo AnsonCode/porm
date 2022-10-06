@@ -183,6 +183,8 @@ func codegen2(ctx context.Context, sql config.SQL, schemaStr, operationStr []byt
 	// sch, _ := os.ReadFile("../schema.graphql")
 	// str, _ := os.ReadFile("../operations/create.graphql")
 	// doc, _ := parser.ParseQuery(&ast.Source{Input: string(str)})
+	// os.WriteFile("final.graphql", schemaStr, 0666)
+
 	schema := gqlparser.MustLoadSchema(&ast.Source{Input: string(schemaStr)})
 	// TODO:逐个加载operation文件，失败的忽略，合法校验，操作重命名
 

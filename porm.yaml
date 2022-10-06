@@ -6,3 +6,10 @@ sql:
       go:
         package: "tutorial"
         out: "example/tutorial"
+
+  - queries: "example/operations/custom/*.graphql"
+    schema: "example/cus.graphql"
+    gen:
+      go:
+        package: "custom"
+        out: "example/custom"

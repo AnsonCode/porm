@@ -15,6 +15,7 @@ import (
 	"github.com/vektah/gqlparser/v2"
 )
 
+// TODO:delete
 func Read() {
 
 	// Define a template.
@@ -61,6 +62,9 @@ func Generate2(ctx context.Context, req *CodeGenRequest) (*CodeGenResponse, erro
 	// enums := buildEnums(req)
 	structs, enums := buildStructsAndEnums(req)
 	fmt.Println(structs)
+
+	// TODO:预处理@sql指令
+	// preOperation(req)
 
 	queries, err := buildQueries(req, structs)
 	if err != nil {

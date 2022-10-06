@@ -1,0 +1,29 @@
+# cust begin
+
+type CusPost {
+  id: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  title: String!
+  published: Boolean!
+  desc: String
+  userId: String!
+}
+
+type Query {
+  cusGetPostById(id: String!): [CusPost]
+}
+
+# type Mutation {
+#   createOnePost(data: PostCreateInput!): Post!
+# }
+
+directive @sql(raw: String!) on FIELD # 针对字段生效
+# directive @sql(raw: String!) on QUERY | MUTATION
+
+scalar DateTime
+scalar Json
+scalar UUID
+scalar BigInt
+scalar Decimal
+scalar Bytes

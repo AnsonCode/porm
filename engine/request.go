@@ -31,8 +31,13 @@ func Do(ctx context.Context, port int, query string, variables map[string]interf
 }
 
 func (e *QueryEngine) Do(ctx context.Context, query string, variables map[string]interface{}, v interface{}) error {
+	// TODO:这里要兼容下sql
+
 	// fmt.Println(vars, qry)
 	qry, _ := InlineQuery(query, variables) //这里要优化？
+
+	// TODO：更改sql值  SELECT * FROM Post WHERE id= {{.id}}
+
 	payload := GQLRequest{
 		Query:     qry,
 		Variables: map[string]interface{}{},
