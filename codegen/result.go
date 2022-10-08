@@ -282,35 +282,49 @@ func in(target string, str_array []string) bool {
 // 	return out
 // }
 
+func parseDirective(operation *ast.OperationDefinition) (string, string) {
+	query := utils.FormatOperateionDocument(operation)
+
+	for _, sel := range operation.SelectionSet {
+		filed, ok := sel.(*ast.Field)
+		if ok {
+			for _, directive := range filed.Directives {
+				if directive.Name == "sql" {
+					query = directive.Arguments.ForName("raw").Value.Raw
+					// ".*\\$\\{([a-z]+)\\}.*"
+					return "RawSQL", query
+				}
+			}
+		}
+	}
+
+	return "Do", query
+
+}
+
 func buildQueries(req *CodeGenRequest, structs []Struct) ([]Query, error) {
 	qs := make([]Query, 0, len(req.OperationList))
-	for _, query := range req.OperationList {
-		if query.Name == "" {
+	for _, operation := range req.OperationList {
+		if operation.Name == "" {
 			fmt.Println("query name is null ,skip")
 			continue
 		}
-
-		// var constantName string
-		// if req.Settings.Go.EmitExportedQueries {
-		// 	constantName = Title(query.Name)
-		// } else {
-		// constantName = LowerTitle(query.Name)
-		// }
-
+		clientMethod, query := parseDirective(operation)
 		gq := Query{
 			// Cmd:          query.Cmd,
-			ConstantName: LowerTitle(query.Name),
-			FieldName:    LowerTitle(query.Name) + "Stmt",
-			MethodName:   Title(query.Name),
-			SourceName:   query.Name,                            // TODO：这里要完善
-			SQL:          utils.FormatOperateionDocument(query), // TODO:这里要重新读取
-			Comments:     []string{string(query.Operation)},
+			ConstantName: LowerTitle(operation.Name),
+			// FieldName:    LowerTitle(query.Name) + "Stmt",
+			MethodName:   Title(operation.Name),
+			SourceName:   operation.Name, // TODO：这里要完善
+			Comments:     []string{string(operation.Operation)},
+			SQL:          query, // TODO:这里要重新读取
+			ClientMethod: clientMethod,
 			// Table:        query.InsertIntoTable,
 		}
 		// sqlpkg := SQLPackageFromString(req.Settings.Go.SqlPackage)
 
 		allArg := []QueryValue{}
-		for _, variable := range query.VariableDefinitions {
+		for _, variable := range operation.VariableDefinitions {
 			arg := QueryValue{
 				Name: variable.Variable, //paramName(p)
 				Typ:  goType2(req, variable),
@@ -322,9 +336,9 @@ func buildQueries(req *CodeGenRequest, structs []Struct) ([]Query, error) {
 
 		// 这里开始构造方法的返回结果
 		gs := &Struct{
-			Name: StructName(query.Name) + "Response",
+			Name: StructName(operation.Name) + "Response",
 		}
-		for _, selection := range query.SelectionSet {
+		for _, selection := range operation.SelectionSet {
 			field3, ok := selection.(*ast.Field)
 			if ok {
 				newfield := Field{

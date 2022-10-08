@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/AnsonCode/porm/engine/ast/dmmf"
@@ -30,7 +31,7 @@ func Do(ctx context.Context, port int, query string, variables map[string]interf
 	return engine.Do(ctx, query, variables, v)
 }
 
-func (e *QueryEngine) Do(ctx context.Context, query string, variables map[string]interface{}, v interface{}) error {
+func (g *QueryEngine) Do(ctx context.Context, query string, variables map[string]interface{}, v interface{}) error {
 	// TODO:这里要兼容下sql
 
 	// fmt.Println(vars, qry)
@@ -38,8 +39,30 @@ func (e *QueryEngine) Do(ctx context.Context, query string, variables map[string
 
 	// TODO：更改sql值  SELECT * FROM Post WHERE id= {{.id}}
 
+	return g.do2(ctx, qry, v)
+}
+func (g *QueryEngine) RawSQL(ctx context.Context, sql string, variables map[string]interface{}, v interface{}) error {
+	// TODO:合成sql
+	newsql := sql
+	for key, vari := range variables {
+		old := "${" + key + "}"
+		str := fmt.Sprintf("%v", vari)
+		newsql = strings.ReplaceAll(newsql, old, str)
+	}
+
+	query := fmt.Sprintf(`
+		mutation {
+			queryRaw(query: "%s", parameters: "[]")
+		}
+		`, newsql)
+
+	return g.do2(ctx, query, v)
+}
+
+func (e *QueryEngine) do2(ctx context.Context, query string, v interface{}) error {
+
 	payload := GQLRequest{
-		Query:     qry,
+		Query:     query,
 		Variables: map[string]interface{}{},
 	}
 	err := e.do(ctx, payload, v)

@@ -146,15 +146,17 @@ func (v QueryValue) UniqueFields() []Field {
 
 // A struct used to generate methods and fields on the Queries struct
 type Query struct {
-	Cmd          string
-	Comments     []string
-	MethodName   string
-	FieldName    string
-	ConstantName string
+	// Cmd          string
+	Comments   []string
+	MethodName string
+	// FieldName    string
+	ConstantName string // schema常量名称
 	SQL          string
-	SourceName   string
+	SourceName   string // 当前查询的原始来源（operation的文件名）
+	ClientMethod string // 实现的接口方法，需要根据修饰指令来判断 @sql
 	Ret          QueryValue
 	Arg          []QueryValue
+
 	// Used for :copyfrom
 	// Table *plugin.Identifier
 }

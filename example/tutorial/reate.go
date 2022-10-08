@@ -10,15 +10,14 @@ import (
 	"fmt"
 )
 
-const reate = `# name: Reate 
-	mutation reate ($title: String!, $published: Boolean!, $userId: String!) {
+//# name: Reate
+const reate = `mutation reate ($title: String!, $published: Boolean!, $userId: String!) {
 	createOnePost(data: {title:$title,published:$published,author:{connect:{id:$userId}}}) {
 		id
 		userId
 	}
 }
-
-	`
+`
 
 //,title string
 
@@ -27,7 +26,6 @@ const reate = `# name: Reate
 //,title string,published bool,userId string
 
 func (t Queries) Reate(ctx context.Context, title string, published bool, userId string) (res *ReateResponse, err error) {
-
 	input := map[string]interface{}{
 
 		"title": title, //string
@@ -38,7 +36,6 @@ func (t Queries) Reate(ctx context.Context, title string, published bool, userId
 
 	}
 	err = t.client.Do(ctx, reate, input, &res)
-
 	if err != nil {
 		fmt.Println(err)
 	}

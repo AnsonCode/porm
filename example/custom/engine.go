@@ -10,6 +10,8 @@ import (
 
 type GraphqlClientInterface interface {
 	Do(ctx context.Context, query string, variables map[string]interface{}, v interface{}) error
+	RawSQL(ctx context.Context, sql string, variables map[string]interface{}, v interface{}) error
+
 	//  Sdl(ctx context.Context) error
 }
 

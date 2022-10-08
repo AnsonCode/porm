@@ -25,24 +25,23 @@ func mustReadFile(name string) string {
 func main() {
 	ctx := context.TODO()
 
-	// _, schema := testSdl()
 	GLOBAL_SCHEME := mustReadFile("./schema.prisma")
-	engine := engine.NewQueryEngine(GLOBAL_SCHEME, 8123, "./query-engine")
-	engine.Connect()
-	defer engine.Disconnect()
-	engine.StartPlayground()
+	client := engine.NewQueryEngine(GLOBAL_SCHEME, 8123, "./query-engine")
+	client.Connect()
+	// defer client.Disconnect()
+	client.StartPlayground()
 
 	// 内省获取 graphql schema
-	sdl, err := engine.IntrospectSDL(ctx)
-	if err != nil {
-		panic(err)
-	}
-	if err := os.WriteFile("schema2.graphql", sdl, 0666); err != nil {
-		panic(err)
-	}
+	// sdl, err := engine.IntrospectSDL(ctx)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// if err := os.WriteFile("schema2.graphql", sdl, 0666); err != nil {
+	// 	panic(err)
+	// }
 
 	// TODO:生成schema.graphql的方式，以便用户好读取
-	query := tutorial.NewClient(engine)
+	query := tutorial.NewClient(client)
 
 	id := "1"
 	whe := &tutorial.PostWhereInput{
@@ -64,8 +63,8 @@ func main() {
 	data, _ = json.MarshalIndent(resraw, "", "\t")
 	fmt.Println(string(data), err3)
 
-	customquery := custom.NewClient(engine)
-	resraw2, err3 := customquery.CusGet(ctx)
+	customquery := custom.NewClient(client)
+	resraw2, err3 := customquery.CusGet(ctx, "1")
 	data, _ = json.MarshalIndent(resraw2, "", "\t")
 	fmt.Println(string(data), err3)
 

@@ -45,10 +45,14 @@ type Json struct {
 type CusGetCusGetPostById struct {
 	// -
 	ID string `json:"id"`
+	// -
+	Title string `json:"title"`
+	// -
+	Desc *string `json:"desc"`
 }
 
 // res2_struct
 type CusGetResponse struct {
 	// -
-	CusGetPostById []*CusGetCusGetPostById `json:"cusGetPostById"`
+	CusGetPostById []*CusGetCusGetPostById `json:"queryRaw"`
 }

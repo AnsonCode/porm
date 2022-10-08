@@ -97,11 +97,8 @@ import (
 {{range .GoQueries}}
 
 	{{if $.OutputQuery .SourceName}}
-	const {{.ConstantName}} = {{$.Q}}# name: {{.MethodName}} 
-	{{escape .SQL}}
-	{{$.Q}}
-
-
+	//# name: {{.MethodName}} 
+	const {{.ConstantName}} = {{$.Q}}{{escape .SQL}}{{$.Q}}
 
 	{{$input := ""}}
 	{{range .Arg}}
@@ -110,14 +107,12 @@ import (
 	{{ end }}
 
 	func (t Queries) {{.MethodName}} (ctx context.Context {{$input}}) (res *{{.Ret.Name}}, err error) {
-		
 		input := map[string]interface{}{
 			{{range .Arg}}
 			"{{.Name}}": {{.Name}},//{{.Typ}}
 			{{ end }}
 		}
-		err=t.client.Do(ctx,{{.ConstantName}},input,&res)
-
+		err=t.client.{{.ClientMethod}}(ctx,{{.ConstantName}},input,&res)
 		if err != nil {
 			fmt.Println(err)
 		}

@@ -10,8 +10,8 @@ import (
 	"fmt"
 )
 
-const test2 = `# name: Test2 
-	query Test2 ($whe: PostWhereInput!, $tak: Int!) {
+//# name: Test2
+const test2 = `query Test2 ($whe: PostWhereInput!, $tak: Int!) {
 	findManyPost(where: $whe, take: $tak, skip: 0) {
 		id
 		published
@@ -23,15 +23,13 @@ const test2 = `# name: Test2
 		}
 	}
 }
-
-	`
+`
 
 //,whe *PostWhereInput
 
 //,whe *PostWhereInput,tak int32
 
 func (t Queries) Test2(ctx context.Context, whe *PostWhereInput, tak int32) (res *Test2Response, err error) {
-
 	input := map[string]interface{}{
 
 		"whe": whe, //*PostWhereInput
@@ -40,7 +38,6 @@ func (t Queries) Test2(ctx context.Context, whe *PostWhereInput, tak int32) (res
 
 	}
 	err = t.client.Do(ctx, test2, input, &res)
-
 	if err != nil {
 		fmt.Println(err)
 	}

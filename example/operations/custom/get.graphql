@@ -1,11 +1,13 @@
-
 # <SELECT * FROM Post WHERE id= ? AND title!=?>
-query cusGet() {
-	cusGetPostById(id: "ss") @sql(raw: "SELECT * FROM Post WHERE id= ? "){
-		id
-	}
+query cusGet($id: String!) {
+  queryRaw: cusGetPostById(id: $id)
+    @sql(raw: "SELECT * FROM Post WHERE id= ${id} ") {
+    id
+    title
+    desc
+  }
   #   queryRaw(
-  #   query: "SELECT * FROM Post WHERE id= ? AND title!=?"
+  #   query: "SELECT * FROM Post WHERE id= ${id} "
   #   parameters: $json
   # )
 }
