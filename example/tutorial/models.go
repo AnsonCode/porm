@@ -315,6 +315,12 @@ type Test3Author struct {
 }
 
 // OBJECT_Query_PART
+type Test3FindFirstPost struct {
+	// -
+	Desc *string `json:"desc"`
+}
+
+// OBJECT_Query_PART
 type Test3FindManyPost struct {
 	// -
 	ID string `json:"id"`
@@ -330,6 +336,8 @@ type Test3FindManyPost struct {
 type Test3Response struct {
 	// -
 	FindManyPost []*Test3FindManyPost `json:"findManyPost"`
+	// -
+	FindFirstPost *Test3FindFirstPost `json:"findFirstPost"`
 }
 
 // OBJECT_Post_PART

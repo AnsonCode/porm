@@ -14,6 +14,8 @@ import (
 	"time"
 
 	"github.com/AnsonCode/porm/engine/ast/dmmf"
+	"github.com/vektah/gqlparser/v2/ast"
+	"github.com/vektah/gqlparser/v2/parser"
 )
 
 var ErrNotFound = errors.New("ErrNotFound")
@@ -37,9 +39,62 @@ func (g *QueryEngine) Do(ctx context.Context, query string, variables map[string
 	// fmt.Println(vars, qry)
 	qry, _ := InlineQuery(query, variables) //这里要优化？
 
-	// TODO：更改sql值  SELECT * FROM Post WHERE id= {{.id}}
+	queryObj, _ := parser.ParseQuery(&ast.Source{Input: qry})
 
-	return g.do2(ctx, qry, v)
+	if len(queryObj.Operations) != 1 {
+		return fmt.Errorf("一次只能查询一个operation")
+	}
+	ope := queryObj.Operations[0]
+
+	if len(ope.SelectionSet) == 1 {
+		return g.do2(ctx, qry, v)
+	}
+
+	requests := make([]GQLRequest, len(ope.SelectionSet))
+
+	selectionset := ope.SelectionSet
+	for i, selection := range selectionset {
+		ope.SelectionSet = ast.SelectionSet{selection}
+		requests[i] = GQLRequest{
+			Query:     FormatOperateionDocument(ope),
+			Variables: map[string]interface{}{},
+		}
+	}
+	var result GQLBatchResponse
+	payload := GQLBatchRequest{
+		Batch:       requests,
+		Transaction: true,
+	}
+	if err := g.Batch(ctx, payload, &result); err != nil {
+		return fmt.Errorf("could not send raw query: %w", err)
+	}
+	if len(result.Errors) > 0 {
+		first := result.Errors[0]
+		return fmt.Errorf("pql error: %s", first.RawMessage())
+	}
+	// 合并JSON字符串
+	var tmpRes string
+	for idx, inner := range result.Result {
+		if len(inner.Errors) > 0 {
+			first := result.Errors[0]
+			return fmt.Errorf("pql error: %s", first.RawMessage())
+		}
+		str := string(inner.Data)
+		// 最后一条
+		if idx == len(result.Result)-1 {
+			tmpRes = tmpRes + str[1:] // 删除开头的{
+		} else {
+			// 非最后一条
+			tmpRes = tmpRes + str[:len(str)-1] + "," // 删除结尾的}
+		}
+		// r.queries[i].ExtractQuery().TxResult <- inner.Data.Result
+	}
+	fmt.Println(tmpRes)
+	if err := json.Unmarshal([]byte(tmpRes), v); err != nil {
+		return fmt.Errorf("json unmarshal: %w", err)
+	}
+	return nil
+	// TODO：更改sql值  SELECT * FROM Post WHERE id= {{.id}}
 }
 func (g *QueryEngine) RawSQL(ctx context.Context, sql string, variables map[string]interface{}, v interface{}) error {
 	// TODO:合成sql

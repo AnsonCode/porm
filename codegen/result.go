@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/AnsonCode/porm/utils"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -283,7 +282,7 @@ func in(target string, str_array []string) bool {
 // }
 
 func parseDirective(operation *ast.OperationDefinition) (string, string) {
-	query := utils.FormatOperateionDocument(operation)
+	query := FormatOperateionDocument(operation)
 
 	for _, sel := range operation.SelectionSet {
 		filed, ok := sel.(*ast.Field)

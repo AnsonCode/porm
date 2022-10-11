@@ -1,8 +1,12 @@
 package codegen
 
 import (
+	"bytes"
 	"strings"
 	"unicode"
+
+	"github.com/vektah/gqlparser/v2/ast"
+	"github.com/vektah/gqlparser/v2/formatter"
 )
 
 func LowerTitle(s string) string {
@@ -37,4 +41,18 @@ func EscapeBacktick(s string) string {
 
 func DoubleSlashComment(s string) string {
 	return "// " + strings.ReplaceAll(s, "\n", "\n// ")
+}
+
+// 位置挪走
+func FormatOperateionDocument(operate *ast.OperationDefinition) string {
+
+	query := &ast.QueryDocument{
+		Operations: ast.OperationList{operate},
+	}
+	var buf bytes.Buffer
+	formatter.NewFormatter(&buf).FormatQueryDocument(query)
+
+	bufstr := buf.String()
+
+	return bufstr
 }

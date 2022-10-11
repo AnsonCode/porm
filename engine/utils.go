@@ -12,6 +12,20 @@ import (
 	"github.com/vektah/gqlparser/v2/parser"
 )
 
+// 位置挪走
+func FormatOperateionDocument(operate *ast.OperationDefinition) string {
+
+	query := &ast.QueryDocument{
+		Operations: ast.OperationList{operate},
+	}
+	var buf bytes.Buffer
+	formatter.NewFormatter(&buf).FormatQueryDocument(query)
+
+	bufstr := buf.String()
+
+	return bufstr
+}
+
 func InlineQueryDocument(query *ast.QueryDocument, variable map[string]interface{}) (string, error) {
 	// 这里要循环处理，去除变量输入
 	for _, operation := range query.Operations {

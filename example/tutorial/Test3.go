@@ -21,6 +21,9 @@ const test3 = `query Test3 ($whe: PostWhereInput!, $tak: Int!) {
 			id
 		}
 	}
+	findFirstPost {
+		desc
+	}
 }
 `
 

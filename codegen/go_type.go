@@ -77,7 +77,8 @@ func goType2(req *CodeGenRequest, variable *ast.VariableDefinition) string {
 
 // https://chenyitian.gitbooks.io/graphql/content/schema.html#scalar-types
 func graphqlType(req *CodeGenRequest, col *Column) string {
-	columnType := DataType(col.Type)
+	columnType := col.Type.Name
+
 	notNull := col.NotNull || col.IsArray
 
 	switch columnType {
