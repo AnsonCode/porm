@@ -1,15 +1,19 @@
 version: "2"
 sql:
-  - queries: "example/operations/*.graphql"
-    schema: "example/schema.graphql" #TODO:生成schema.graphql的方式，以便用户好读取
+  - queries:
+      - "example/operations/*.graphql"
+      - "example/operations/custom/*.graphql"
+    schema:
+      - "example/schema.graphql" #TODO:生成schema.graphql的方式，以便用户好读取
+      - "example/cus.graphql"
     gen:
       go:
         package: "tutorial"
         out: "example/tutorial"
 
-  - queries: "example/operations/custom/*.graphql"
-    schema: "example/cus.graphql"
-    gen:
-      go:
-        package: "custom"
-        out: "example/custom"
+  # - queries: "example/operations/custom/*.graphql"
+  #   schema: "example/cus.graphql"
+  #   gen:
+  #     go:
+  #       package: "custom"
+  #       out: "example/custom"

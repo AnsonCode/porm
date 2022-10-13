@@ -134,7 +134,7 @@ func Generate(ctx context.Context, e Env, dir, filename string, stderr io.Writer
 		// if sql.Plugin != nil {
 		// 	combo.Codegen = *sql.Plugin
 		// }
-		schema, _ := parseFS(os.DirFS(dir), sql.Schema)
+		schema, _ := parseFSSchema(os.DirFS(dir), sql.Schema)
 		operations, _ := parseFS(os.DirFS(dir), sql.Queries)
 
 		// result, failed := parse(ctx, e, name, dir, sql.SQL, combo, parseOpts, stderr)
@@ -178,14 +178,16 @@ func Generate(ctx context.Context, e Env, dir, filename string, stderr io.Writer
 	return output, nil
 }
 
-func codegen2(ctx context.Context, sql config.SQL, schemaStr, operationStr []byte) (*codegen.CodeGenResponse, error) {
+func codegen2(ctx context.Context, sql config.SQL, schemaSource []*ast.Source, operationStr []byte) (*codegen.CodeGenResponse, error) {
 
 	// sch, _ := os.ReadFile("../schema.graphql")
 	// str, _ := os.ReadFile("../operations/create.graphql")
 	// doc, _ := parser.ParseQuery(&ast.Source{Input: string(str)})
 	// os.WriteFile("final.graphql", schemaStr, 0666)
 
-	schema := gqlparser.MustLoadSchema(&ast.Source{Input: string(schemaStr)})
+	// schema := gqlparser.MustLoadSchema(&ast.Source{Input: string(schemaStr)})
+	schema := gqlparser.MustLoadSchema(schemaSource...)
+
 	// TODO:逐个加载operation文件，失败的忽略，合法校验，操作重命名
 
 	doc, err := gqlparser.LoadQuery(schema, string(operationStr))
@@ -208,6 +210,29 @@ func codegen2(ctx context.Context, sql config.SQL, schemaStr, operationStr []byt
 	}
 	// valid(req)
 	return codegen.Generate2(ctx, req)
+}
+
+func parseFSSchema(fsys fs.FS, patterns []string) ([]*ast.Source, error) {
+	// var filenames []string
+	var result []*ast.Source
+	for _, pattern := range patterns {
+		list, err := fs.Glob(fsys, pattern)
+		if err != nil {
+			return nil, err
+		}
+		if len(list) == 0 {
+			return nil, fmt.Errorf("template: pattern matches no files: %#q", pattern)
+		}
+		// filenames = append(filenames, list...)
+		for _, path := range list {
+			tmpcontent, _ := ioutil.ReadFile(path)
+			source := ast.Source{Input: string(tmpcontent)}
+			result = append(result, &source)
+		}
+
+	}
+
+	return result, nil
 }
 
 func parseFS(fsys fs.FS, patterns []string) ([]byte, error) {

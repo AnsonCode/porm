@@ -9,7 +9,6 @@ import (
 	"syscall"
 
 	"github.com/AnsonCode/porm/engine"
-	"github.com/AnsonCode/porm/example/custom"
 	"github.com/AnsonCode/porm/example/tutorial"
 )
 
@@ -63,8 +62,7 @@ func main() {
 	data, _ = json.MarshalIndent(resraw, "", "\t")
 	fmt.Println(string(data), err3)
 
-	customquery := custom.NewClient(client)
-	resraw2, err3 := customquery.CusGet(ctx, "1")
+	resraw2, err3 := query.CusGet(ctx, "1")
 	data, _ = json.MarshalIndent(resraw2, "", "\t")
 	fmt.Println(string(data), err3)
 

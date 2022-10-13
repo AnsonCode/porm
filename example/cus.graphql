@@ -10,7 +10,8 @@ type CusPost {
   userId: String!
 }
 
-type Query {
+# 这里必须要用 extend扩展
+extend type Query {
   cusGetPostById(id: String!): [CusPost]
 }
 
@@ -20,10 +21,3 @@ type Query {
 
 directive @sql(raw: String!) on FIELD # 针对字段生效
 # directive @sql(raw: String!) on QUERY | MUTATION
-
-scalar DateTime
-scalar Json
-scalar UUID
-scalar BigInt
-scalar Decimal
-scalar Bytes

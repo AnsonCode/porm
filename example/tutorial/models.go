@@ -58,6 +58,22 @@ type BoolFilter struct {
 	Not *NestedBoolFilter `json:"not,omitempty"`
 }
 
+// OBJECT_Query_PART
+type CusGetCusGetPostById struct {
+	// -
+	ID string `json:"id"`
+	// -
+	Title string `json:"title"`
+	// -
+	Desc *string `json:"desc"`
+}
+
+// res2_struct
+type CusGetResponse struct {
+	// -
+	CusGetPostById []*CusGetCusGetPostById `json:"queryRaw"`
+}
+
 // INPUT_OBJECT
 type DateTimeFilter struct {
 	// df
