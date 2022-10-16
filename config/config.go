@@ -70,6 +70,8 @@ type Config struct {
 }
 
 type PrismaConf struct {
+	SchemaPath          string `json:"schema_path" yaml:"schema_path"`
+	GraphqlPath         string `json:"graphql_path" yaml:"graphql_path"`
 	QueryEnginePort     int    `json:"query_engine_port" yaml:"query_engine_port"`
 	PlaygroundPort      int    `json:"playground_port" yaml:"playground_port"`
 	BaseDir             string `json:"base_dir" yaml:"base_dir"`

@@ -29,15 +29,6 @@ func main() {
 	client.Connect()
 	defer client.Disconnect()
 
-	// 内省获取 graphql schema
-	// sdl, err := engine.IntrospectSDL(ctx)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// if err := os.WriteFile("schema2.graphql", sdl, 0666); err != nil {
-	// 	panic(err)
-	// }
-
 	// TODO:生成schema.graphql的方式，以便用户好读取
 	query := tutorial.NewClient(client)
 

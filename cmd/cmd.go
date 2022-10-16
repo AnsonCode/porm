@@ -8,7 +8,9 @@ import (
 	"path/filepath"
 
 	"github.com/AnsonCode/porm/config"
+	"github.com/AnsonCode/porm/engine"
 	"github.com/prisma/prisma-client-go/binaries"
+	"github.com/prisma/prisma-client-go/binaries/platform"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -26,6 +28,8 @@ func Do(args []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) int 
 	rootCmd.AddCommand(genCmd)
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(installCmd)
+	rootCmd.AddCommand(sdlCmd)
+
 	// rootCmd.AddCommand(playgroundCmd)
 
 	rootCmd.AddCommand(versionCmd)
@@ -87,6 +91,8 @@ var initCmd = &cobra.Command{
 		defaultConf := config.Config{
 			Version: "1.0",
 			Prisma: &config.PrismaConf{
+				SchemaPath:          "schema.prisma",
+				GraphqlPath:         "schema.graphql",
 				BaseDir:             "./prisma",
 				QueryEnginePort:     8123,
 				PlaygroundPort:      8124,
@@ -200,32 +206,28 @@ var checkCmd = &cobra.Command{
 	},
 }
 
-// var playgroundCmd = &cobra.Command{
-// 	Use:   "playground",
-// 	Short: "Start prisma  query engine playground",
-// 	Run: func(cmd *cobra.Command, args []string) {
-// 		// TODO：
+func initConf(cmd *cobra.Command) *config.Config {
+	stderr := cmd.ErrOrStderr()
+	dir, name := getConfigPath(stderr, cmd.Flag("file"))
+	configPath, conf, err := readConfig(stderr, dir, name)
+	if err != nil {
+		panic(err)
+	}
 
-// 	},
-// }
+	base := filepath.Base(configPath)
+	if err := config.Validate(conf); err != nil {
+		fmt.Fprintf(stderr, "error validating %s: %s\n", base, err)
+		panic(err)
+	}
+	return conf
+}
 
 var installCmd = &cobra.Command{
 	Use:   "install",
 	Short: "Install prisma  engine based config",
 	Run: func(cmd *cobra.Command, args []string) {
 		// TODO：
-		stderr := cmd.ErrOrStderr()
-		dir, name := getConfigPath(stderr, cmd.Flag("file"))
-		configPath, conf, err := readConfig(stderr, dir, name)
-		if err != nil {
-			return
-		}
-
-		base := filepath.Base(configPath)
-		if err := config.Validate(conf); err != nil {
-			fmt.Fprintf(stderr, "error validating %s: %s\n", base, err)
-			return
-		}
+		conf := initConf(cmd)
 		toDir := conf.Prisma.BaseDir
 		if conf.Prisma.QueryEngine {
 			file, err := binaries.DownloadEngine("query-engine", toDir)
@@ -251,5 +253,41 @@ var installCmd = &cobra.Command{
 			}
 			fmt.Println("下载完毕：", file)
 		}
+	},
+}
+
+var sdlCmd = &cobra.Command{
+	Use:   "sdl",
+	Short: "get graphql.schema form prisma",
+	Run: func(cmd *cobra.Command, args []string) {
+		conf := initConf(cmd)
+		prismaConf := conf.Prisma
+		content, err := os.ReadFile(prismaConf.SchemaPath)
+		if err != nil {
+			panic(err)
+		}
+		binaryName := platform.BinaryPlatformName()
+		enginePath := binaries.GetEnginePath(prismaConf.BaseDir, "query-engine", binaryName) // 构建引擎路径
+		//这个后续要换成随机的，避免冲突
+		port := prismaConf.QueryEnginePort
+		client := engine.NewQueryEngine(string(content), port, 0, enginePath)
+		if err := client.Connect(); err != nil {
+			fmt.Println("------------------------------->")
+			fmt.Println(err)
+			panic(err)
+		}
+		defer client.Disconnect()
+
+		// TODO：sdl
+		ctx := context.TODO()
+		// 内省获取 graphql schema
+		sdl, err := client.IntrospectSDL(ctx)
+		if err != nil {
+			panic(err)
+		}
+		if err := os.WriteFile(prismaConf.GraphqlPath, sdl, 0666); err != nil {
+			panic(err)
+		}
+		fmt.Println("\n获取成功~")
 	},
 }

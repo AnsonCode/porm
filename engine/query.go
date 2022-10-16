@@ -132,7 +132,7 @@ func (e *QueryEngine) spawn(file string) error {
 	// args = append(args, "--enable-playground", "--port", queryEnginePort)
 
 	e.cmd.Stdout = os.Stdout
-	e.cmd.Stderr = os.Stderr
+	e.cmd.Stderr = os.Stderr // TODO:这里如果读取到报错，应该要panic
 
 	e.cmd.Env = append(
 		os.Environ(),
@@ -168,6 +168,9 @@ func (e *QueryEngine) spawn(file string) error {
 			connectErr = err
 			time.Sleep(100 * time.Millisecond)
 			continue
+		} else {
+			connectErr = nil
+			break
 		}
 	}
 	if connectErr != nil {

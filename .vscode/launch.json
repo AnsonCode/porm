@@ -27,15 +27,19 @@
             ],
         },
         {
-            "name": "download",
+            "name": "sdl",
             "type": "go",
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}/main.go",
             "cwd": "${workspaceFolder}",
             "args": [
-                "download",
+                "sdl",
             ],
+            "env": {
+                "PRISMA_CLIENT_GO_LOG":"info",
+                "DATABASE_URL_MYSQL":"mysql://root:shaoxiong123456@8.142.115.204:3306/wd"
+            }
         },
          {
             "name": "example",
