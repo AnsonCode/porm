@@ -7,7 +7,7 @@ prisma:
   graphql_path: "./example/schema.graphql"
   query_engine: true
   migration_engine: true
-  introspection_engine: false
+  introspection_engine: true
 
 sql:
   - queries:

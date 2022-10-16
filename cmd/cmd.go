@@ -9,14 +9,18 @@ import (
 
 	"github.com/AnsonCode/porm/config"
 	"github.com/AnsonCode/porm/engine"
+	"github.com/AnsonCode/porm/engine/introspection"
+	"github.com/AnsonCode/porm/engine/utils"
+
 	"github.com/prisma/prisma-client-go/binaries"
-	"github.com/prisma/prisma-client-go/binaries/platform"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
 	yaml "gopkg.in/yaml.v3"
 )
+
+var provider, url string
 
 // Do runs the command logic.
 func Do(args []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) int {
@@ -29,6 +33,9 @@ func Do(args []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) int 
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(installCmd)
 	rootCmd.AddCommand(sdlCmd)
+	rootCmd.AddCommand(pullCmd)
+	pullCmd.Flags().StringVarP(&provider, "provider", "p", "mysql", "数据库类型")
+	pullCmd.Flags().StringVarP(&url, "url", "u", "", "数据库连接:mysql://xxx:xxxx@ip:port/databasename")
 
 	// rootCmd.AddCommand(playgroundCmd)
 
@@ -266,8 +273,8 @@ var sdlCmd = &cobra.Command{
 		if err != nil {
 			panic(err)
 		}
-		binaryName := platform.BinaryPlatformName()
-		enginePath := binaries.GetEnginePath(prismaConf.BaseDir, "query-engine", binaryName) // 构建引擎路径
+
+		enginePath := utils.GetQueryEnginePath(prismaConf.BaseDir) // 构建引擎路径
 		//这个后续要换成随机的，避免冲突
 		port := prismaConf.QueryEnginePort
 		client := engine.NewQueryEngine(string(content), port, 0, enginePath)
@@ -286,6 +293,28 @@ var sdlCmd = &cobra.Command{
 			panic(err)
 		}
 		if err := os.WriteFile(prismaConf.GraphqlPath, sdl, 0666); err != nil {
+			panic(err)
+		}
+		fmt.Println("\n获取成功~")
+	},
+}
+
+var pullCmd = &cobra.Command{
+	Use:   "pull",
+	Short: "内省数据库获取schema.prisma",
+	Run: func(cmd *cobra.Command, args []string) {
+		// TODO：
+		conf := initConf(cmd)
+		prismaConf := conf.Prisma
+		enginePath := utils.GetIntrospectionEnginePath(prismaConf.BaseDir) // 构建引擎路径
+
+		engine := introspection.NewIntrospectEngine(enginePath)
+		schema, err := engine.Pull(provider, url)
+		// fmt.Println(schema, err)
+		if err != nil {
+			panic(err)
+		}
+		if err := os.WriteFile(prismaConf.SchemaPath, []byte(schema), 0666); err != nil {
 			panic(err)
 		}
 		fmt.Println("\n获取成功~")

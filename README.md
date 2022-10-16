@@ -24,10 +24,10 @@ go run github.com/prisma/prisma-client-go db push
   - [ ] 启动 prisma 引擎的指令~
   - [x] playground 支持 自定义查询
 
-- [ ] prisma 引擎集成？弄一个安装的命令
+- [x] prisma 引擎集成？弄一个安装的命令
   - xx inti 中判断是否下载了？
   - 生成 graphql schema
-- [ ] prisma 配置端口
+- [x] prisma 配置端口
 - [ ] 日志
 
 bug fix

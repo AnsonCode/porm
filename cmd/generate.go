@@ -38,12 +38,12 @@ const errMessageNoPackages = `No packages are configured`
 // 	fmt.Fprintf(stderr, "%s:%d:%d: %s\n", filename, fileErr.Line, fileErr.Column, fileErr.Err)
 // }
 
-type outPair struct {
-	Gen    config.SQLGen
-	Plugin *config.Codegen
+// type outPair struct {
+// 	Gen    config.SQLGen
+// 	Plugin *config.Codegen
 
-	config.SQL
-}
+// 	config.SQL
+// }
 
 func readConfig(stderr io.Writer, dir, filename string) (string, *config.Config, error) {
 	configPath := ""
