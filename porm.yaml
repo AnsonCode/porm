@@ -1,4 +1,12 @@
 version: "2"
+prisma:
+  query_engine_port: 8123
+  playground_port: 8124
+  base_dir: "./prisma"
+  query_engine: true
+  migration_engine: true
+  introspection_engine: false
+
 sql:
   - queries:
       - "example/operations/*.graphql"

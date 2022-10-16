@@ -16,13 +16,14 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func NewQueryEngine(schema string, port int, enginePath string) *QueryEngine {
-	killExistingPrismaQueryEngineProcess(port)
+func NewQueryEngine(schema string, engine_port, playground_port int, enginePath string) *QueryEngine {
+	killExistingPrismaQueryEngineProcess(engine_port)
 
 	return &QueryEngine{
-		Schema:     schema,
-		port:       port,
-		enginePath: enginePath,
+		Schema:          schema,
+		port:            engine_port,
+		playground_port: playground_port,
+		enginePath:      enginePath,
 		// hasBinaryTargets: hasBinaryTargets,
 		http: &http.Client{},
 	}
@@ -37,7 +38,8 @@ type QueryEngine struct {
 	// http is the internal http client
 	http *http.Client
 
-	port int
+	port            int
+	playground_port int
 
 	// url holds the query-engine url
 	// url string
@@ -66,11 +68,15 @@ func (e *QueryEngine) Connect() error {
 
 	file, err := e.ensure()
 	if err != nil {
-		return fmt.Errorf("ensure: %w", err)
+		panic(err)
 	}
 
 	if err := e.spawn(file); err != nil {
 		return fmt.Errorf("spawn: %w", err)
+	}
+	// 如果给了端口，则默认开启
+	if e.playground_port != 0 {
+		e.startPlayground()
 	}
 
 	fmt.Printf("connecting took %s", time.Since(startEngine))

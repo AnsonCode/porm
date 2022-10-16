@@ -63,10 +63,19 @@ func (p *Paths) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 type Config struct {
-	Version string `json:"version" yaml:"version"`
-
-	SQL []SQL `json:"sql" yaml:"sql"`
+	Version string      `json:"version" yaml:"version"`
+	Prisma  *PrismaConf `json:"prisma" yaml:"prisma"`
+	SQL     []SQL       `json:"sql" yaml:"sql"`
 	// Plugins []Plugin `json:"plugins" yaml:"plugins"`
+}
+
+type PrismaConf struct {
+	QueryEnginePort     int    `json:"query_engine_port" yaml:"query_engine_port"`
+	PlaygroundPort      int    `json:"playground_port" yaml:"playground_port"`
+	BaseDir             string `json:"base_dir" yaml:"base_dir"`
+	QueryEngine         bool   `json:"query_engine" yaml:"query_engine"`
+	MigrationEngine     bool   `json:"migration_engine" yaml:"migration_engine"`
+	IntrospectionEngine bool   `json:"introspection_engine" yaml:"introspection_engine"`
 }
 
 type SQL struct {
@@ -161,39 +170,39 @@ func Validate(c *Config) error {
 	return nil
 }
 
-type CombinedSettings struct {
-	Global  Config
-	Package SQL
-	Go      SQLGo
-	// Kotlin    SQLKotlin
-	// Python    SQLPython
-	// JSON      SQLJSON
-	Rename map[string]string
-	// Overrides []Override
+// type CombinedSettings struct {
+// 	Global  Config
+// 	Package SQL
+// 	Go      SQLGo
+// 	// Kotlin    SQLKotlin
+// 	// Python    SQLPython
+// 	// JSON      SQLJSON
+// 	Rename map[string]string
+// 	// Overrides []Override
 
-	// TODO: Combine these into a more usable type
-	Codegen Codegen
-}
+// 	// TODO: Combine these into a more usable type
+// 	Codegen Codegen
+// }
 
-func Combine(conf Config, pkg SQL) CombinedSettings {
-	cs := CombinedSettings{
-		Global:  conf,
-		Package: pkg,
-	}
+// func Combine(conf Config, pkg SQL) CombinedSettings {
+// 	cs := CombinedSettings{
+// 		Global:  conf,
+// 		Package: pkg,
+// 	}
 
-	if pkg.Gen.Go != nil {
-		cs.Go = *pkg.Gen.Go
-		// cs.Overrides = append(cs.Overrides, pkg.Gen.Go.Overrides...)
-	}
-	// if pkg.Gen.Kotlin != nil {
-	// 	cs.Kotlin = *pkg.Gen.Kotlin
-	// }
-	// if pkg.Gen.Python != nil {
-	// 	cs.Python = *pkg.Gen.Python
-	// 	cs.Overrides = append(cs.Overrides, pkg.Gen.Python.Overrides...)
-	// }
-	// if pkg.Gen.JSON != nil {
-	// 	cs.JSON = *pkg.Gen.JSON
-	// }
-	return cs
-}
+// 	if pkg.Gen.Go != nil {
+// 		cs.Go = *pkg.Gen.Go
+// 		// cs.Overrides = append(cs.Overrides, pkg.Gen.Go.Overrides...)
+// 	}
+// 	// if pkg.Gen.Kotlin != nil {
+// 	// 	cs.Kotlin = *pkg.Gen.Kotlin
+// 	// }
+// 	// if pkg.Gen.Python != nil {
+// 	// 	cs.Python = *pkg.Gen.Python
+// 	// 	cs.Overrides = append(cs.Overrides, pkg.Gen.Python.Overrides...)
+// 	// }
+// 	// if pkg.Gen.JSON != nil {
+// 	// 	cs.JSON = *pkg.Gen.JSON
+// 	// }
+// 	return cs
+// }

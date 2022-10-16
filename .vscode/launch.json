@@ -26,6 +26,17 @@
                 "init",
             ],
         },
+        {
+            "name": "download",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/main.go",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "download",
+            ],
+        },
          {
             "name": "example",
             "type": "go",

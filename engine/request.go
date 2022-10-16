@@ -296,9 +296,9 @@ func request(ctx context.Context, client *http.Client, method string, url string
 	return responseBody, nil
 }
 
-func (e *QueryEngine) StartPlayground() {
+func (e *QueryEngine) startPlayground() {
 	handler := NewHandler(e.port)
-	pgPort := 8124
+	pgPort := e.playground_port
 	srv := http.Server{
 		Addr:    fmt.Sprintf(":%d", pgPort),
 		Handler: handler,

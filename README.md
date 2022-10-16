@@ -10,7 +10,8 @@ go run github.com/prisma/prisma-client-go db push
 
 - [x] 程序总入口，配置等
 - [x] 枚举值特性支持
-- [ ] 原生查询 sdk 生成
+
+- [x] 原生查询 sdk 生成
 
   - [x] 原生 sql 支持：mutation RawSQL{ queryRaw(query:"SELECT \* FROM Post WHERE id= ?",parameters:"[1]") }
   - [x] 结构原生 sql(重要)=>还需要搞定多 shcema 的输入
@@ -21,7 +22,7 @@ go run github.com/prisma/prisma-client-go db push
 - [x] 内置 graphql 端点（代理~）
 
   - [ ] 启动 prisma 引擎的指令~
-  - [ ] playground 支持 自定义查询
+  - [x] playground 支持 自定义查询
 
 - [ ] prisma 引擎集成？弄一个安装的命令
   - xx inti 中判断是否下载了？
@@ -33,7 +34,8 @@ bug fix
 
 - [x] 重复的变量定义~
 - [x] datatime 支持
-- [ ] 修复不支持数组的 bug
+- [x] 修复不支持数组的 bug
+- [ ] json 类型支持
 
 # thx
 

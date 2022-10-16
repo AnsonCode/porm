@@ -25,10 +25,9 @@ func main() {
 	ctx := context.TODO()
 
 	GLOBAL_SCHEME := mustReadFile("./schema.prisma")
-	client := engine.NewQueryEngine(GLOBAL_SCHEME, 8123, "./query-engine")
+	client := engine.NewQueryEngine(GLOBAL_SCHEME, 8123, 8124, "./prisma/efdf9b1183dddfd4258cd181a72125755215ab7b/prisma-query-engine-darwin")
 	client.Connect()
-	// defer client.Disconnect()
-	client.StartPlayground()
+	defer client.Disconnect()
 
 	// 内省获取 graphql schema
 	// sdl, err := engine.IntrospectSDL(ctx)

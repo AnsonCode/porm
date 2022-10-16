@@ -3,9 +3,9 @@ module github.com/AnsonCode/porm
 go 1.18
 
 require (
-	github.com/buger/jsonparser v1.1.1
 	github.com/iancoleman/strcase v0.2.0
 	github.com/joho/godotenv v1.4.0
+	github.com/prisma/prisma-client-go v0.16.2
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/pflag v1.0.5
 	github.com/takuoki/gocase v1.1.1
@@ -18,7 +18,6 @@ require (
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
-	github.com/stretchr/testify v1.8.0 // indirect
 	github.com/tidwall/gjson v1.14.3 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/AnsonCode/porm/config"
+	"github.com/prisma/prisma-client-go/binaries"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -85,6 +86,14 @@ var initCmd = &cobra.Command{
 		}
 		defaultConf := config.Config{
 			Version: "1.0",
+			Prisma: &config.PrismaConf{
+				BaseDir:             "./prisma",
+				QueryEnginePort:     8123,
+				PlaygroundPort:      8124,
+				QueryEngine:         true,
+				MigrationEngine:     true,
+				IntrospectionEngine: true,
+			},
 			SQL: []config.SQL{
 				{
 					Schema:  []string{"todo"},
@@ -104,14 +113,6 @@ var initCmd = &cobra.Command{
 			return err
 		}
 		return os.WriteFile(file, blob, 0644)
-	},
-}
-
-var installCmd = &cobra.Command{
-	Use:   "install",
-	Short: "Install the prisma  query engine",
-	Run: func(cmd *cobra.Command, args []string) {
-		// TODO：
 	},
 }
 
@@ -207,3 +208,48 @@ var checkCmd = &cobra.Command{
 
 // 	},
 // }
+
+var installCmd = &cobra.Command{
+	Use:   "install",
+	Short: "Install prisma  engine based config",
+	Run: func(cmd *cobra.Command, args []string) {
+		// TODO：
+		stderr := cmd.ErrOrStderr()
+		dir, name := getConfigPath(stderr, cmd.Flag("file"))
+		configPath, conf, err := readConfig(stderr, dir, name)
+		if err != nil {
+			return
+		}
+
+		base := filepath.Base(configPath)
+		if err := config.Validate(conf); err != nil {
+			fmt.Fprintf(stderr, "error validating %s: %s\n", base, err)
+			return
+		}
+		toDir := conf.Prisma.BaseDir
+		if conf.Prisma.QueryEngine {
+			file, err := binaries.DownloadEngine("query-engine", toDir)
+			if err != nil {
+				fmt.Println("could not download engines: %w", err)
+				return
+			}
+			fmt.Println("下载完毕：", file)
+		}
+		if conf.Prisma.MigrationEngine {
+			file, err := binaries.DownloadEngine("migration-engine", toDir)
+			if err != nil {
+				fmt.Println("could not download engines: %w", err)
+				return
+			}
+			fmt.Println("下载完毕：", file)
+		}
+		if conf.Prisma.IntrospectionEngine {
+			file, err := binaries.DownloadEngine("introspection-engine", toDir)
+			if err != nil {
+				fmt.Println("could not download engines: %w", err)
+				return
+			}
+			fmt.Println("下载完毕：", file)
+		}
+	},
+}
