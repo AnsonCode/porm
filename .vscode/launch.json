@@ -27,14 +27,16 @@
             ],
         },
         {
-            "name": "sdl",
+            "name": "pull",
             "type": "go",
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}/main.go",
             "cwd": "${workspaceFolder}",
             "args": [
-                "sdl",
+                "pull",
+                // "-u",
+                // "mysql://root:shaoxiong123456@8.142.115.204:3306/wd"
             ],
             "env": {
                 "PRISMA_CLIENT_GO_LOG":"info",
